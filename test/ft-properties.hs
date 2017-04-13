@@ -1,28 +1,30 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- QuickCheck properties for Data.FingerTree
 
 module Main where
 
-import HaskellWorks.Data.FingerTree    -- needs to be compiled with -DTESTING for use here
+import HaskellWorks.Data.FingerTree.Strict
 
 import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
-import Test.HUnit (Assertion, (@?=))
-import Test.QuickCheck hiding ((><))
+import Test.HUnit                           (Assertion, (@?=))
+import Test.QuickCheck                      hiding ((><))
 import Test.QuickCheck.Poly
 
-import Prelude hiding (null, reverse, foldl, foldl1, foldr, foldr1, all)
+import           Prelude hiding (all, foldl, foldl1, foldr, foldr1, null, reverse)
 import qualified Prelude
 
-import Control.Applicative (Applicative(..))
-import Control.Monad (ap)
-import Data.Foldable (Foldable(foldMap, foldl, foldr), toList, all)
-import Data.Functor ((<$>))
-import Data.Traversable (traverse)
-import Data.List (inits)
-import Data.Monoid (Monoid(..))
+import Control.Applicative (Applicative (..))
+import Control.Monad       (ap)
+import Data.Foldable       (Foldable (foldMap, foldl, foldr), all, toList)
+import Data.Functor        ((<$>))
+import Data.List           (inits)
+import Data.Monoid         (Monoid (..))
+import Data.Traversable    (traverse)
 
 main :: IO ()
 main = defaultMainWithOpts
@@ -145,13 +147,13 @@ prop_null xs =
 prop_viewl :: Seq A -> Bool
 prop_viewl xs =
     case viewl xs of
-    EmptyL ->   Prelude.null (toList xs)
+    EmptyL   ->   Prelude.null (toList xs)
     x :< xs' -> valid xs' && toList xs == x : toList xs'
 
 prop_viewr :: Seq A -> Bool
 prop_viewr xs =
     case viewr xs of
-    EmptyR ->   Prelude.null (toList xs)
+    EmptyR   ->   Prelude.null (toList xs)
     xs' :> x -> valid xs' && toList xs == toList xs' ++ [x]
 
 prop_split :: Int -> Seq A -> Bool
@@ -249,9 +251,9 @@ instance Arbitrary a => Arbitrary (Digit a) where
         Three <$> arbitrary <*> arbitrary <*> arbitrary,
         Four <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary]
 
-    shrink (One a) = map One (shrink a)
-    shrink (Two a b) = [One a, One b]
-    shrink (Three a b c) = [Two a b, Two a c, Two b c]
+    shrink (One a)        = map One (shrink a)
+    shrink (Two a b)      = [One a, One b]
+    shrink (Three a b c)  = [Two a b, Two a c, Two b c]
     shrink (Four a b c d) = [Three a b c, Three a b d, Three a c d, Three b c d]
 
 ------------------------------------------------------------------------

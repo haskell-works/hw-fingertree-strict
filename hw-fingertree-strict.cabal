@@ -30,21 +30,20 @@ cabal-version:          >=1.10
 
 library
   hs-source-dirs:       src
-  exposed-modules:      HaskellWorks.Data.FingerTree
-                      , HaskellWorks.Data.IntervalMap.FingerTree
-                      , HaskellWorks.Data.PriorityQueue.FingerTree
+  exposed-modules:      HaskellWorks.Data.FingerTree.Strict
+                      , HaskellWorks.Data.IntervalMap.FingerTree.Strict
+                      , HaskellWorks.Data.PriorityQueue.FingerTree.Strict
   build-depends:        base >= 4.7 && < 5
-                      , deepseq
   default-language:     Haskell2010
 
 test-suite hw-fingertree-strict-test
   type: exitcode-stdio-1.0
-  main-is: tests/ft-properties.hs
+  main-is: test/ft-properties.hs
   cpp-options: -DTESTING
   build-depends:        base >= 4.2 && < 6
-                      , deepseq
                       , HUnit
                       , QuickCheck
+                      , hw-fingertree-strict
                       , test-framework
                       , test-framework-hunit
                       , test-framework-quickcheck2

@@ -1,10 +1,10 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 #if __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Safe                  #-}
 #endif
 #if __GLASGOW_HASKELL__ >= 710
-{-# LANGUAGE AutoDeriveTypeable #-}
+{-# LANGUAGE AutoDeriveTypeable    #-}
 #endif
 -----------------------------------------------------------------------------
 -- |
@@ -39,7 +39,7 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.PriorityQueue.FingerTree (
+module HaskellWorks.Data.PriorityQueue.FingerTree.Strict (
     PQueue,
     -- * Construction
     empty,
@@ -54,13 +54,13 @@ module HaskellWorks.Data.PriorityQueue.FingerTree (
     minViewWithKey
     ) where
 
-import qualified HaskellWorks.Data.FingerTree as FT
-import HaskellWorks.Data.FingerTree (FingerTree, (<|), (|>), (><), ViewL(..), Measured(..))
+import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
+import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Arrow ((***))
-import Data.Foldable (Foldable(foldMap))
+import Data.Foldable (Foldable (foldMap))
 import Data.Monoid
-import Prelude hiding (null)
+import Prelude       hiding (null)
 
 data Entry k v = Entry k v
 
@@ -91,7 +91,7 @@ instance Ord k => Functor (PQueue k) where
 
 instance Ord k => Foldable (PQueue k) where
     foldMap f q = case minView q of
-        Nothing -> mempty
+        Nothing      -> mempty
         Just (v, q') -> f v `mappend` foldMap f q'
 
 instance Ord k => Monoid (PQueue k v) where
@@ -171,11 +171,11 @@ minViewWithKey (PQueue q)
   | FT.null q = Nothing
   | otherwise = Just ((k, v), case FT.viewl r of
     _ :< r' -> PQueue (l >< r')
-    _ -> error "can't happen")
+    _       -> error "can't happen")
   where
     Prio k v = measure q
     (l, r) = FT.split (below k) q
 
 below :: Ord k => k -> Prio k v -> Bool
-below _ NoPrio = False
+below _ NoPrio      = False
 below k (Prio k' _) = k' <= k

@@ -42,12 +42,8 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.FingerTree (
-#if TESTING
+module HaskellWorks.Data.FingerTree.Strict (
     FingerTree(..), Digit(..), Node(..), deep, node2, node3,
-#else
-    FingerTree,
-#endif
     Measured(..),
     -- * Construction
     empty, singleton,
@@ -65,13 +61,11 @@ module HaskellWorks.Data.FingerTree (
     -- $example
     ) where
 
-import           Prelude             hiding (null, reverse)
+import Prelude hiding (null, reverse)
 
-import           Control.Applicative (Applicative (pure, (<*>)), (<$>))
-import           Control.DeepSeq
-import           Data.Foldable       (Foldable (foldMap), toList)
-import           Data.Monoid
-import           GHC.Generics        (Generic)
+import Control.Applicative (Applicative (pure, (<*>)), (<$>))
+import Data.Foldable       (Foldable (foldMap), toList)
+import Data.Monoid
 
 infixr 5 ><
 infixr 5 <|, :<
@@ -80,15 +74,15 @@ infixl 5 |>, :>
 -- | View of the left end of a sequence.
 data ViewL s a
     = EmptyL        -- ^ empty sequence
-    | a :< s a      -- ^ leftmost element and the rest of the sequence
-    deriving (Eq, Ord, Show, Read, Generic, NFData)
+    | !a :< s a      -- ^ leftmost element and the rest of the sequence
+    deriving (Eq, Ord, Show, Read)
 
 -- | View of the right end of a sequence.
 data ViewR s a
     = EmptyR        -- ^ empty sequence
-    | s a :> a      -- ^ the sequence minus the rightmost element,
+    | s a :> !a      -- ^ the sequence minus the rightmost element,
                     -- and the rightmost element
-    deriving (Eq, Ord, Show, Read, Generic, NFData)
+    deriving (Eq, Ord, Show, Read)
 
 instance Functor s => Functor (ViewL s) where
     fmap _ EmptyL    = EmptyL
@@ -106,11 +100,11 @@ instance Measured v a => Monoid (FingerTree v a) where
 -- Explicit Digit type (Exercise 1)
 
 data Digit a
-    = One a
-    | Two a a
-    | Three a a a
-    | Four a a a a
-    deriving (Show, Generic, NFData)
+    = One !a
+    | Two !a !a
+    | Three !a !a !a
+    | Four !a !a !a !a
+    deriving Show
 
 instance Foldable Digit where
     foldMap f (One a)        = f a
@@ -133,8 +127,8 @@ instance (Measured v a) => Measured v (Digit a) where
 -- 4.2 Caching measurements
 ---------------------------
 
-data Node v a = Node2 !v a a | Node3 !v a a a
-    deriving (Show, Generic, NFData)
+data Node v a = Node2 !v !a !a | Node3 !v !a !a !a
+    deriving Show
 
 instance Foldable (Node v) where
     foldMap f (Node2 _ a b)   = f a `mappend` f b
@@ -167,13 +161,11 @@ nodeToDigit (Node3 _ a b c) = Three a b c
 -- element types and measurements.
 data FingerTree v a
     = Empty
-    | Single a
-    | Deep !v !(Digit a) (FingerTree v (Node v a)) !(Digit a)
-    deriving (
+    | Single !a
+    | Deep !v !(Digit a) !(FingerTree v (Node v a)) !(Digit a)
 #if TESTING
-    Show,
+    deriving (Show)
 #endif
-    Generic, NFData)
 
 deep ::  (Measured v a) =>
      Digit a -> FingerTree v (Node v a) -> Digit a -> FingerTree v a
