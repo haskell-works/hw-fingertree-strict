@@ -74,13 +74,13 @@ infixl 5 |>, :>
 -- | View of the left end of a sequence.
 data ViewL s a
     = EmptyL        -- ^ empty sequence
-    | !a :< s a      -- ^ leftmost element and the rest of the sequence
+    | !a :< !(s a)  -- ^ leftmost element and the rest of the sequence
     deriving (Eq, Ord, Show, Read)
 
 -- | View of the right end of a sequence.
 data ViewR s a
     = EmptyR        -- ^ empty sequence
-    | s a :> !a      -- ^ the sequence minus the rightmost element,
+    | !(s a) :> !a      -- ^ the sequence minus the rightmost element,
                     -- and the rightmost element
     deriving (Eq, Ord, Show, Read)
 
@@ -729,7 +729,7 @@ takeUntil p  =  fst . split p
 dropUntil :: (Measured v a) => (v -> Bool) -> FingerTree v a -> FingerTree v a
 dropUntil p  =  snd . split p
 
-data Split t a = Split t a t
+data Split t a = Split !t !a !t
 
 splitTree :: (Measured v a) =>
     (v -> Bool) -> v -> FingerTree v a -> Split (FingerTree v a) a
