@@ -64,7 +64,7 @@ module HaskellWorks.Data.FingerTree.Strict (
 import Prelude hiding (null, reverse)
 
 import Control.Applicative (Applicative (pure, (<*>)), (<$>))
-import Data.Foldable       (Foldable (foldMap), toList)
+import Data.Foldable       (Foldable (foldMap), foldr', toList)
 import Data.Monoid
 
 infixr 5 ><
@@ -364,7 +364,7 @@ singleton = Single
 
 -- | /O(n)/. Create a sequence from a finite list of elements.
 fromList :: (Measured v a) => [a] -> FingerTree v a
-fromList = foldr (<|) Empty
+fromList = foldr' (<|) Empty
 
 -- | /O(1)/. Add an element to the left end of a sequence.
 -- Mnemonic: a triangle with the single element at the pointy end.
