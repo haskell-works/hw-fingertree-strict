@@ -41,7 +41,7 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict (
     -- * Segments
     Segment(..), point,
     -- * Segment maps
-    SegmentMap(..), empty
+    SegmentMap(..), empty, singleton
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
@@ -49,7 +49,6 @@ import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
 import Data.Foldable       (Foldable (foldMap))
-import Data.Monoid
 import Data.Traversable    (Traversable (traverse))
 
 ----------------------------------
@@ -65,16 +64,16 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !(Segment k) !a
+data Node k a = Node !k !(Segment k, a)
 
 instance Functor (Node k) where
-    fmap f (Node i x) = Node i (f x)
+    fmap f (Node i t) = Node i (f <$> t)
 
-instance Foldable (Node k) where
-    foldMap f (Node _ x) = f x
+-- instance Foldable (Node k) where
+--     foldMap f (Node _ x) = f x
 
-instance Traversable (Node k) where
-    traverse f (Node i x) = Node i <$> f x
+-- instance Traversable (Node k) where
+--     traverse f (Node i x) = Node i <$> f x
 
 instance (Ord k, Monoid k) => Measured k (Node k a) where
     measure (Node i _) = error "TODO"
@@ -83,17 +82,17 @@ instance (Ord k, Monoid k) => Measured k (Node k a) where
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 newtype SegmentMap k a = SegmentMap (FingerTree k (Node k a))
--- ordered lexicographically by segment
+-- ordered lexicographically by segment start
 
 instance Functor (SegmentMap k) where
     fmap f (SegmentMap t) = SegmentMap (FT.unsafeFmap (fmap f) t)
 
-instance Foldable (SegmentMap k) where
-    foldMap f (SegmentMap t) = foldMap (foldMap f) t
+-- instance Foldable (SegmentMap k) where
+--     foldMap f (SegmentMap t) = foldMap (foldMap f) t
 
-instance Traversable (SegmentMap k) where
-    traverse f (SegmentMap t) =
-        SegmentMap <$> FT.unsafeTraverse (traverse f) t
+-- instance Traversable (SegmentMap k) where
+--     traverse f (SegmentMap t) =
+--         SegmentMap <$> FT.unsafeTraverse (traverse f) t
 
 -- -- | 'empty' and 'union'.
 -- instance (Ord k) => Monoid (SegmentMap k a) where
@@ -106,7 +105,7 @@ empty = SegmentMap FT.empty
 
 -- | /O(1)/.  Interval map with a single entry.
 singleton :: (Ord k, Monoid k) => Segment k -> a -> SegmentMap k a
-singleton i x = SegmentMap (FT.singleton (Node i x))
+singleton s@(Segment lo hi) a = SegmentMap (FT.singleton (Node lo (s, a)))
 
 {-
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
