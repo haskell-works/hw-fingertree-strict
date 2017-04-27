@@ -63,13 +63,13 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !(Segment k) !a
+data Node k a = Node !(Segment k) !a deriving (Show)
 
 instance Functor (Node k) where
     fmap f (Node i t) = Node i (f t)
 
--- instance Foldable (Node k) where
---     foldMap f (Node _ x) = f x
+instance Foldable (Node k) where
+    foldMap f (Node _ x) = f x
 
 -- instance Traversable (Node k) where
 --     traverse f (Node i x) = Node i <$> f x
@@ -84,13 +84,14 @@ instance (Monoid k) => Measured k (Node k a) where
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 newtype SegmentMap k a = SegmentMap (FingerTree k (Node k a))
+    deriving (Show)
 -- ordered lexicographically by segment start
 
 instance Functor (SegmentMap k) where
     fmap f (SegmentMap t) = SegmentMap (FT.unsafeFmap (fmap f) t)
 
--- instance Foldable (SegmentMap k) where
---     foldMap f (SegmentMap t) = foldMap (foldMap f) t
+instance Foldable (SegmentMap k) where
+    foldMap f (SegmentMap t) = foldMap (foldMap f) t
 
 -- instance Traversable (SegmentMap k) where
 --     traverse f (SegmentMap t) =
@@ -124,12 +125,12 @@ update s@(Segment lo hi) (Just x) (SegmentMap t) =
 
 cappedL :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
 cappedL lo t = case viewr t of
-  EmptyR -> t
+  EmptyR   -> t
   ltp :> n -> maybe ltp (ltp |>) (capL lo n)
 
 cappedR :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
 cappedR hi t = case viewl t of
-  EmptyL -> t
+  EmptyL   -> t
   n :< rtp -> maybe rtp (<| rtp) (capR hi n)
 
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
