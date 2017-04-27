@@ -63,7 +63,7 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !(Segment k) !a deriving (Show)
+data Node k a = Node !(Segment k) !a
 
 instance Functor (Node k) where
     fmap f (Node i t) = Node i (f t)
@@ -84,7 +84,6 @@ instance (Monoid k) => Measured k (Node k a) where
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 newtype SegmentMap k a = SegmentMap (FingerTree k (Node k a))
-    deriving (Show)
 -- ordered lexicographically by segment start
 
 instance Functor (SegmentMap k) where
@@ -142,6 +141,9 @@ capR :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
 capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
   then Just $ Node (Segment (succ lihi) rihi) a
   else Nothing
+
+fromList :: (Monoid v, Ord v, Enum v, Eq a) => [(Segment v, Maybe a)] -> SegmentMap v a
+fromList = foldr (uncurry update) empty
 
 {-
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
