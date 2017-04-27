@@ -1,6 +1,5 @@
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -64,10 +63,10 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !k !(Segment k, a)
+data Node k a = Node !(Segment k) !a
 
 instance Functor (Node k) where
-    fmap f (Node i t) = Node i (f <$> t)
+    fmap f (Node i t) = Node i (f t)
 
 -- instance Foldable (Node k) where
 --     foldMap f (Node _ x) = f x
@@ -75,8 +74,11 @@ instance Functor (Node k) where
 -- instance Traversable (Node k) where
 --     traverse f (Node i x) = Node i <$> f x
 
-instance (Ord k, Monoid k) => Measured k (Node k a) where
-    measure (Node i _) = error "TODO"
+instance (Monoid k) => Measured k (Segment k) where
+  measure = low
+
+instance (Monoid k) => Measured k (Node k a) where
+    measure (Node k _) = measure k
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
@@ -105,7 +107,40 @@ empty = SegmentMap FT.empty
 
 -- | /O(1)/.  Interval map with a single entry.
 singleton :: (Ord k, Monoid k) => Segment k -> a -> SegmentMap k a
-singleton s@(Segment lo hi) a = SegmentMap (FT.singleton (Node lo (s, a)))
+singleton s@(Segment lo hi) a = SegmentMap $ FT.singleton $ Node s a
+
+update :: forall k a. (Monoid k, Ord k, Enum k, Eq a)
+       => Segment k
+       -> Maybe a
+       -> SegmentMap k a
+       -> SegmentMap k a
+update (Segment lo hi)   _        m | lo > hi    = m
+update _                 Nothing  m              = m
+update s@(Segment lo hi) (Just x) (SegmentMap t) =
+  SegmentMap $ cappedL lo lt >< Node s x <| cappedR hi rt
+  where
+    (lt, ys) = FT.split (>= lo) t
+    (_, rt)  = FT.split (> hi) ys
+
+cappedL :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
+cappedL lo t = case viewr t of
+  EmptyR -> t
+  ltp :> n -> maybe ltp (ltp |>) (capL lo n)
+
+cappedR :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
+cappedR hi t = case viewl t of
+  EmptyL -> t
+  n :< rtp -> maybe rtp (<| rtp) (capR hi n)
+
+capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
+capL rilo (Node (Segment lilo lihi) a) = if lihi < rilo
+  then Just $ Node (Segment lilo (pred rilo)) a
+  else Nothing
+
+capR :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
+capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
+  then Just $ Node (Segment (succ lihi) rihi) a
+  else Nothing
 
 {-
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
