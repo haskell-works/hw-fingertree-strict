@@ -58,63 +58,63 @@ import Data.Traversable    (Traversable (traverse))
 
 -- | A closed segment.  The lower bound should be less than or equal
 -- to the higher bound.
-data Segment v = Segment { low :: !v, high :: !v }
+data Segment k = Segment { low :: !k, high :: !k }
     deriving (Eq, Ord, Show)
 
 -- | An segment in which the lower and upper bounds are equal.
-point :: v -> Segment v
-point v = Segment v v
+point :: k -> Segment k
+point k = Segment k k
 
-data Node v a = Node !(Segment v) !a
+data Node k a = Node !(Segment k) !a
 
-instance Functor (Node v) where
+instance Functor (Node k) where
     fmap f (Node i x) = Node i (f x)
 
-instance Foldable (Node v) where
+instance Foldable (Node k) where
     foldMap f (Node _ x) = f x
 
-instance Traversable (Node v) where
+instance Traversable (Node k) where
     traverse f (Node i x) = Node i <$> f x
 
-instance (Ord v, Monoid v) => Measured v (Node v a) where
+instance (Ord k, Monoid k) => Measured k (Node k a) where
     measure (Node i _) = error "TODO"
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
-newtype SegmentMap v a = SegmentMap (FingerTree v (Node v a))
+newtype SegmentMap k a = SegmentMap (FingerTree k (Node k a))
 -- ordered lexicographically by segment
 
-instance Functor (SegmentMap v) where
+instance Functor (SegmentMap k) where
     fmap f (SegmentMap t) = SegmentMap (FT.unsafeFmap (fmap f) t)
 
-instance Foldable (SegmentMap v) where
+instance Foldable (SegmentMap k) where
     foldMap f (SegmentMap t) = foldMap (foldMap f) t
 
-instance Traversable (SegmentMap v) where
+instance Traversable (SegmentMap k) where
     traverse f (SegmentMap t) =
         SegmentMap <$> FT.unsafeTraverse (traverse f) t
 
 -- -- | 'empty' and 'union'.
--- instance (Ord v) => Monoid (SegmentMap v a) where
+-- instance (Ord k) => Monoid (SegmentMap k a) where
 --     mempty = empty
 --     mappend = union
 
 -- | /O(1)/.  The empty segment map.
-empty :: (Ord v, Monoid v) => SegmentMap v a
+empty :: (Ord k, Monoid k) => SegmentMap k a
 empty = SegmentMap FT.empty
 
 -- | /O(1)/.  Interval map with a single entry.
-singleton :: (Ord v, Monoid v) => Segment v -> a -> SegmentMap v a
+singleton :: (Ord k, Monoid k) => Segment k -> a -> SegmentMap k a
 singleton i x = SegmentMap (FT.singleton (Node i x))
 
 {-
-capL :: (Ord v, Enum v) => v -> Node v a -> Maybe (Node v a)
+capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
 capL rilo (Node (Segment lilo lihi) a) = if lihi < rilo
   then Just (Node (Segment lilo (pred rilo)) a)
   else Nothing
 
-capR :: (Ord v, Enum v) => v -> Node v a -> Maybe (Node v a)
+capR :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
 capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
   then Just (Node (Segment (succ lihi) rihi) a)
   else Nothing
@@ -122,7 +122,7 @@ capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
 -- | /O(log n)/.  Insert an Segment into a map.
 -- The map may contain duplicate Segments; the new entry will be inserted
 -- before any existing entries for the same Segment.
-update :: forall v a. (Ord v, Enum v) => Segment v -> Maybe a -> SegmentMap v a -> SegmentMap v a
+update :: forall k a. (Ord k, Enum k) => Segment k -> Maybe a -> SegmentMap k a -> SegmentMap k a
 update   (Segment lo hi) _ m | lo > hi = m
 update i@(Segment lo hi) mx (SegmentMap t) = case mx of
   Just x  -> SegmentMap (cappedL >< Node i x <| cappedR)
@@ -130,11 +130,11 @@ update i@(Segment lo hi) mx (SegmentMap t) = case mx of
   where
     (lt, ys) = FT.split larger       t
     (_ , rt) = FT.split (atleast hi) ys
-    cappedL :: FingerTree (IntSegment v) (Node v a)
+    cappedL :: FingerTree (IntSegment k) (Node k a)
     cappedL = case viewr lt of
       EmptyR    -> lt
       ltp :> n  -> maybe ltp (ltp |>) (capL lo n)
-    cappedR :: FingerTree (IntSegment v) (Node v a)
+    cappedR :: FingerTree (IntSegment k) (Node k a)
     cappedR = case viewl rt of
       EmptyL    -> rt
       n :< rtp  -> maybe rtp (<| rtp) (capR hi n)
