@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveAnyClass        #-}
-{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 #if __GLASGOW_HASKELL__ >= 702
@@ -38,12 +38,10 @@
 -----------------------------------------------------------------------------
 
 module HaskellWorks.Data.SegmentMap.FingerTree.Strict (
-    -- * Intervals
-    Interval(..), point,
-    -- * Interval maps
-    SegmentMap(..), empty, singleton, insert, union,
-    -- * Searching
-    search, intersections, dominators
+    -- * Segments
+    Segment(..), point,
+    -- * Segment maps
+    SegmentMap(..), empty
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
@@ -55,15 +53,15 @@ import Data.Monoid
 import Data.Traversable    (Traversable (traverse))
 
 ----------------------------------
--- 4.8 Application: interval trees
+-- 4.8 Application: segment trees
 ----------------------------------
 
--- | A closed interval.  The lower bound should be less than or equal
+-- | A closed segment.  The lower bound should be less than or equal
 -- to the higher bound.
 data Segment v = Segment { low :: !v, high :: !v }
     deriving (Eq, Ord, Show)
 
--- | An interval in which the lower and upper bounds are equal.
+-- | An segment in which the lower and upper bounds are equal.
 point :: v -> Segment v
 point v = Segment v v
 
@@ -81,11 +79,11 @@ instance Traversable (Node v) where
 instance (Ord v, Monoid v) => Measured v (Node v a) where
     measure (Node i _) = error "TODO"
 
--- | Map of closed intervals, possibly with duplicates.
--- The 'Foldable' and 'Traversable' instances process the intervals in
+-- | Map of closed segments, possibly with duplicates.
+-- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 newtype SegmentMap v a = SegmentMap (FingerTree v (Node v a))
--- ordered lexicographically by interval
+-- ordered lexicographically by segment
 
 instance Functor (SegmentMap v) where
     fmap f (SegmentMap t) = SegmentMap (FT.unsafeFmap (fmap f) t)
@@ -97,49 +95,49 @@ instance Traversable (SegmentMap v) where
     traverse f (SegmentMap t) =
         SegmentMap <$> FT.unsafeTraverse (traverse f) t
 
--- | 'empty' and 'union'.
-instance (Ord v) => Monoid (SegmentMap v a) where
-    mempty = empty
-    mappend = union
+-- -- | 'empty' and 'union'.
+-- instance (Ord v) => Monoid (SegmentMap v a) where
+--     mempty = empty
+--     mappend = union
 
--- | /O(1)/.  The empty interval map.
-empty :: (Ord v) => SegmentMap v a
+-- | /O(1)/.  The empty segment map.
+empty :: (Ord v, Monoid v) => SegmentMap v a
 empty = SegmentMap FT.empty
 
 -- | /O(1)/.  Interval map with a single entry.
-singleton :: (Ord v) => Segment v -> a -> SegmentMap v a
+singleton :: (Ord v, Monoid v) => Segment v -> a -> SegmentMap v a
 singleton i x = SegmentMap (FT.singleton (Node i x))
 
 {-
 capL :: (Ord v, Enum v) => v -> Node v a -> Maybe (Node v a)
-capL rilo (Node (Interval lilo lihi) a) = if lihi < rilo
-  then Just (Node (Interval lilo (pred rilo)) a)
+capL rilo (Node (Segment lilo lihi) a) = if lihi < rilo
+  then Just (Node (Segment lilo (pred rilo)) a)
   else Nothing
 
 capR :: (Ord v, Enum v) => v -> Node v a -> Maybe (Node v a)
-capR lihi (Node (Interval rilo rihi) a) = if lihi < rilo
-  then Just (Node (Interval (succ lihi) rihi) a)
+capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
+  then Just (Node (Segment (succ lihi) rihi) a)
   else Nothing
 
--- | /O(log n)/.  Insert an interval into a map.
--- The map may contain duplicate intervals; the new entry will be inserted
--- before any existing entries for the same interval.
-update :: forall v a. (Ord v, Enum v) => Interval v -> Maybe a -> SegmentMap v a -> SegmentMap v a
-update   (Interval lo hi) _ m | lo > hi = m
-update i@(Interval lo hi) mx (SegmentMap t) = case mx of
+-- | /O(log n)/.  Insert an Segment into a map.
+-- The map may contain duplicate Segments; the new entry will be inserted
+-- before any existing entries for the same Segment.
+update :: forall v a. (Ord v, Enum v) => Segment v -> Maybe a -> SegmentMap v a -> SegmentMap v a
+update   (Segment lo hi) _ m | lo > hi = m
+update i@(Segment lo hi) mx (SegmentMap t) = case mx of
   Just x  -> SegmentMap (cappedL >< Node i x <| cappedR)
   Nothing -> SegmentMap (cappedL >< cappedR)
   where
     (lt, ys) = FT.split larger       t
     (_ , rt) = FT.split (atleast hi) ys
-    cappedL :: FingerTree (IntInterval v) (Node v a)
+    cappedL :: FingerTree (IntSegment v) (Node v a)
     cappedL = case viewr lt of
       EmptyR    -> lt
       ltp :> n  -> maybe ltp (ltp |>) (capL lo n)
-    cappedR :: FingerTree (IntInterval v) (Node v a)
+    cappedR :: FingerTree (IntSegment v) (Node v a)
     cappedR = case viewl rt of
       EmptyL    -> rt
       n :< rtp  -> maybe rtp (<| rtp) (capR hi n)
-    larger (IntInterval k _) = k >= i
-    larger NoInterval        = error "larger NoInterval"
+    larger (IntSegment k _) = k >= i
+    larger NoSegment        = error "larger NoInterval"
 -}
