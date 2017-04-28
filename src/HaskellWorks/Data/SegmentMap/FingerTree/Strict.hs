@@ -68,8 +68,8 @@ data Node k a = Node !(Segment k) !a
 instance Functor (Node k) where
     fmap f (Node i t) = Node i (f t)
 
--- instance Foldable (Node k) where
---     foldMap f (Node _ x) = f x
+instance Foldable (Node k) where
+    foldMap f (Node _ x) = f x
 
 -- instance Traversable (Node k) where
 --     traverse f (Node i x) = Node i <$> f x
@@ -89,8 +89,8 @@ newtype SegmentMap k a = SegmentMap (FingerTree k (Node k a))
 instance Functor (SegmentMap k) where
     fmap f (SegmentMap t) = SegmentMap (FT.unsafeFmap (fmap f) t)
 
--- instance Foldable (SegmentMap k) where
---     foldMap f (SegmentMap t) = foldMap (foldMap f) t
+instance Foldable (SegmentMap k) where
+    foldMap f (SegmentMap t) = foldMap (foldMap f) t
 
 -- instance Traversable (SegmentMap k) where
 --     traverse f (SegmentMap t) =
@@ -124,12 +124,12 @@ update s@(Segment lo hi) (Just x) (SegmentMap t) =
 
 cappedL :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
 cappedL lo t = case viewr t of
-  EmptyR -> t
+  EmptyR   -> t
   ltp :> n -> maybe ltp (ltp |>) (capL lo n)
 
 cappedR :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
 cappedR hi t = case viewl t of
-  EmptyL -> t
+  EmptyL   -> t
   n :< rtp -> maybe rtp (<| rtp) (capR hi n)
 
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
@@ -141,6 +141,9 @@ capR :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
 capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
   then Just $ Node (Segment (succ lihi) rihi) a
   else Nothing
+
+fromList :: (Monoid v, Ord v, Enum v, Eq a) => [(Segment v, Maybe a)] -> SegmentMap v a
+fromList = foldr (uncurry update) empty
 
 {-
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
