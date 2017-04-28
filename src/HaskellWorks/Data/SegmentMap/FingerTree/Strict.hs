@@ -180,7 +180,7 @@ capR :: (Ord k, Enum k)
   -> Node (Min k) (Segment k, a)
   -> Maybe (Node (Min k) (Segment k, a))
 capR lihi (Node _ (Segment rilo rihi, a)) = if lihi < rilo
-  then Just $ Node (Min rilo) (Segment (succ lihi) rihi, a)
+  then Just $ Node (Min (succ lihi)) (Segment (succ lihi) rihi, a)
   else Nothing
 
 fromList :: (Ord v, Enum v, Eq a, Bounded v)
