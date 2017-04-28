@@ -46,7 +46,7 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     fromList,
     insert,
     singleton,
-    toList,
+    -- toList,
     update
     ) where
 
@@ -71,7 +71,7 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !k !a
+data Node k a = Node !k !a deriving Show
 
 instance Functor (Node k) where
     fmap f (Node i t) = Node i (f t)
@@ -92,9 +92,9 @@ instance (Monoid k) => Measured k (Node k a) where
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 
-newtype OrderedMap k a = OrderedMap (FingerTree k (Node k a))
+newtype OrderedMap k a = OrderedMap (FingerTree k (Node k a)) deriving Show
 
-newtype SegmentMap k a = SegmentMap (OrderedMap (Min k) (Segment k, a))
+newtype SegmentMap k a = SegmentMap (OrderedMap (Min k) (Segment k, a)) deriving Show
 
 -- ordered lexicographically by segment start
 
@@ -188,8 +188,8 @@ fromList :: (Ord v, Enum v, Eq a, Bounded v)
   -> SegmentMap v a
 fromList = foldr (uncurry update) empty
 
-toList :: SegmentMap v a -> [(Segment v, a)]
-toList (SegmentMap ft) = foldr (:) [] ft
+-- toList :: SegmentMap v a -> [(Segment v, a)]
+-- toList (SegmentMap ft) = foldr (:) [] ft
 
 {-
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
