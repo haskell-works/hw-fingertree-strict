@@ -36,8 +36,8 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.SegmentMap.FingerTree.Strict (
-    -- * Segments
+module HaskellWorks.Data.SegmentMap.FingerTree.Strict
+  ( -- * Segments
     Segment(..), point,
     -- * Segment maps
     SegmentMap(..), empty, singleton,
@@ -49,7 +49,6 @@ import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
 import Data.Foldable       (Foldable (foldMap))
-import Data.Monoid
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
 
@@ -126,6 +125,13 @@ delete :: forall k a. (Bounded k, Ord k, Enum k, Eq a)
        -> SegmentMap k a
 delete = flip update Nothing
 
+insert :: forall k a. (Bounded k, Ord k, Enum k, Eq a)
+       => Segment k
+       -> a
+       -> SegmentMap k a
+       -> SegmentMap k a
+insert s a = update s (Just a)
+
 update :: forall k a. (Ord k, Enum k, Bounded k, Eq a)
        => Segment k
        -> Maybe a
@@ -138,10 +144,6 @@ update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
   where
     (lt, ys) = FT.split (>= Min lo) t
     (_, rt)  = FT.split (> Min hi) ys
-    -- SegmentMap $ OrderedMap (cappedL (Min lo) lt >< (Node (Min lo) (s, x) <| cappedR (Min hi) rt)) -- Node s x <| cappedR hi rt
-    -- where
-    --   (lt, ys) = FT.split (>= Min lo) t
-    --   (_, rt)  = FT.split (> Min hi) ys
 
 cappedL :: (Enum k, Ord k, Bounded k)
   => k
