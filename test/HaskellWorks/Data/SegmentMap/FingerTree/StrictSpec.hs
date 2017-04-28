@@ -7,17 +7,18 @@ module HaskellWorks.Data.SegmentMap.FingerTree.StrictSpec
 
 import Data.Foldable
 
-import           HaskellWorks.Data.SegmentMap.FingerTree.Strict
+import HaskellWorks.Data.SegmentMap.FingerTree.Strict
+import HaskellWorks.Hspec.Hedgehog
+import Hedgehog
+import Test.Hspec
+
 import qualified HaskellWorks.Data.SegmentMap.FingerTree.Strict as S (fromList)
+import qualified Hedgehog.Gen                                   as Gen
+import qualified Hedgehog.Range                                 as Range
 
 import Test.Hspec
 
 {-# ANN module ("HLint: ignore Redundant do"  :: String) #-}
-
--- To prevent `No instance for (Monoid Int)`
-instance Monoid Int where
-    mempty  = 0
-    mappend = (+)
 
 spec :: Spec
 spec = describe "HaskellWorks.Data.SegmentMap.StrictSpec" $ do
@@ -30,3 +31,7 @@ spec = describe "HaskellWorks.Data.SegmentMap.StrictSpec" $ do
       let emptySM2 :: SegmentMap Int Int = S.fromList []
       toList emptySM2 `shouldBe` toList emptySM
 
+    it "should have require function that checks hedgehog properties" $ do
+      require $ property $ do
+        x <- forAll (Gen.int Range.constantBounded)
+        x === x

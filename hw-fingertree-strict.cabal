@@ -45,10 +45,12 @@ test-suite hw-fingertree-strict-test
   main-is:         Spec.hs
   cpp-options: -DTESTING
   build-depends:        base >= 4.2 && < 6
+                      , hedgehog
                       , hspec
                       , HUnit
-                      , QuickCheck
                       , hw-fingertree-strict
+                      , hw-hspec-hedgehog
+                      , QuickCheck
                       , test-framework
                       , test-framework-hunit
                       , test-framework-quickcheck2
