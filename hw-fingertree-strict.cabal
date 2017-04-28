@@ -39,7 +39,9 @@ library
 
 test-suite hw-fingertree-strict-test
   type: exitcode-stdio-1.0
-  main-is: test/ft-properties.hs
+  hs-source-dirs: test
+  main-is: ft-properties.hs
+  other-modules: SegmentMapSpec
   cpp-options: -DTESTING
   build-depends:        base >= 4.2 && < 6
                       , HUnit
