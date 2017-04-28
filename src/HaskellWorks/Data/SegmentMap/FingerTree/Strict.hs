@@ -46,7 +46,6 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     fromList,
     insert,
     singleton,
-    -- toList,
     update
     ) where
 
@@ -187,40 +186,3 @@ fromList :: (Ord v, Enum v, Eq a, Bounded v)
   => [(Segment v, Maybe a)]
   -> SegmentMap v a
 fromList = foldr (uncurry update) empty
-
--- toList :: SegmentMap v a -> [(Segment v, a)]
--- toList (SegmentMap ft) = foldr (:) [] ft
-
-{-
-capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
-capL rilo (Node (Segment lilo lihi) a) = if lihi < rilo
-  then Just (Node (Segment lilo (pred rilo)) a)
-  else Nothing
-
-capR :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
-capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
-  then Just (Node (Segment (succ lihi) rihi) a)
-  else Nothing
-
--- | /O(log n)/.  Insert an Segment into a map.
--- The map may contain duplicate Segments; the new entry will be inserted
--- before any existing entries for the same Segment.
-update :: forall k a. (Ord k, Enum k) => Segment k -> Maybe a -> SegmentMap k a -> SegmentMap k a
-update   (Segment lo hi) _ m | lo > hi = m
-update i@(Segment lo hi) mx (SegmentMap t) = case mx of
-  Just x  -> SegmentMap (cappedL >< Node i x <| cappedR)
-  Nothing -> SegmentMap (cappedL >< cappedR)
-  where
-    (lt, ys) = FT.split larger       t
-    (_ , rt) = FT.split (atleast hi) ys
-    cappedL :: FingerTree (IntSegment k) (Node k a)
-    cappedL = case viewr lt of
-      EmptyR    -> lt
-      ltp :> n  -> maybe ltp (ltp |>) (capL lo n)
-    cappedR :: FingerTree (IntSegment k) (Node k a)
-    cappedR = case viewl rt of
-      EmptyL    -> rt
-      n :< rtp  -> maybe rtp (<| rtp) (capR hi n)
-    larger (IntSegment k _) = k >= i
-    larger NoSegment        = error "larger NoInterval"
--}
