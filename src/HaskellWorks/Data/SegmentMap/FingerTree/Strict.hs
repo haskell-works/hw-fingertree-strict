@@ -41,7 +41,7 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     Segment(..), point,
     -- * Segment maps
     SegmentMap(..), empty, singleton,
-    update, delete, fromList
+    update, delete, fromList, toList
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
@@ -181,6 +181,9 @@ fromList :: (Ord v, Enum v, Eq a, Bounded v)
   => [(Segment v, Maybe a)]
   -> SegmentMap v a
 fromList = foldr (uncurry update) empty
+
+toList :: SegmentMap v a -> [(Segment v, a)]
+toList (SegmentMap ft) = foldr (:) [] ft
 
 {-
 capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
