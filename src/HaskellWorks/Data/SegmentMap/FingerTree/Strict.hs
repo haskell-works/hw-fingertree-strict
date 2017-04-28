@@ -41,7 +41,7 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict (
     Segment(..), point,
     -- * Segment maps
     SegmentMap(..), empty, singleton,
-    update, fromList
+    update, delete, fromList
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
@@ -79,7 +79,7 @@ instance (Monoid k) => Measured k (Segment k) where
   measure = low
 
 instance (Monoid k) => Measured k (Node k a) where
-    measure (Node k _) = measure k
+  measure (Node k _) = measure k
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
@@ -106,9 +106,15 @@ instance Foldable (SegmentMap k) where
 empty :: (Ord k, Monoid k) => SegmentMap k a
 empty = SegmentMap FT.empty
 
--- | /O(1)/.  Interval map with a single entry.
+-- | /O(1)/.  Segment map with a single entry.
 singleton :: (Ord k, Monoid k) => Segment k -> a -> SegmentMap k a
 singleton s@(Segment lo hi) a = SegmentMap $ FT.singleton $ Node s a
+
+delete :: forall k a. (Monoid k, Ord k, Enum k, Eq a)
+       => Segment k
+       -> SegmentMap k a
+       -> SegmentMap k a
+delete = flip update Nothing
 
 update :: forall k a. (Monoid k, Ord k, Enum k, Eq a)
        => Segment k
