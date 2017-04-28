@@ -49,6 +49,8 @@ import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
 import Data.Foldable       (Foldable (foldMap))
+import Data.Monoid
+import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
 
 ----------------------------------
@@ -64,7 +66,7 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !(Segment k) !a
+data Node k a = Node !k !a
 
 instance Functor (Node k) where
     fmap f (Node i t) = Node i (f t)
@@ -72,23 +74,36 @@ instance Functor (Node k) where
 instance Foldable (Node k) where
     foldMap f (Node _ x) = f x
 
--- instance Traversable (Node k) where
---     traverse f (Node i x) = Node i <$> f x
+instance Traversable (Node k) where
+    traverse f (Node i x) = Node i <$> f x
 
 instance (Monoid k) => Measured k (Segment k) where
   measure = low
 
 instance (Monoid k) => Measured k (Node k a) where
-  measure (Node k _) = measure k
+  measure (Node k _) = k
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
-newtype SegmentMap k a = SegmentMap (FingerTree k (Node k a))
+
+newtype OrderedMap k a = OrderedMap (FingerTree k (Node k a))
+
+newtype SegmentMap k a = SegmentMap (OrderedMap (Min k) (Segment k, a))
+
 -- ordered lexicographically by segment start
 
+instance Functor (OrderedMap k) where
+    fmap f (OrderedMap t) = OrderedMap (FT.unsafeFmap (fmap f) t)
+
+instance Foldable (OrderedMap k) where
+    foldMap f (OrderedMap t) = foldMap (foldMap f) t
+
+instance Traversable (OrderedMap k) where
+    traverse f (OrderedMap t) = OrderedMap <$> FT.unsafeTraverse (traverse f) t
+
 instance Functor (SegmentMap k) where
-    fmap f (SegmentMap t) = SegmentMap (FT.unsafeFmap (fmap f) t)
+    fmap f (SegmentMap t) = SegmentMap (fmap (fmap f) t)
 
 instance Foldable (SegmentMap k) where
     foldMap f (SegmentMap t) = foldMap (foldMap f) t
@@ -97,59 +112,72 @@ instance Foldable (SegmentMap k) where
 --     traverse f (SegmentMap t) =
 --         SegmentMap <$> FT.unsafeTraverse (traverse f) t
 
--- -- | 'empty' and 'union'.
--- instance (Ord k) => Monoid (SegmentMap k a) where
---     mempty = empty
---     mappend = union
-
 -- | /O(1)/.  The empty segment map.
-empty :: (Ord k, Monoid k) => SegmentMap k a
-empty = SegmentMap FT.empty
+empty :: (Ord k, Bounded k) => SegmentMap k a
+empty = SegmentMap (OrderedMap FT.empty)
 
 -- | /O(1)/.  Segment map with a single entry.
-singleton :: (Ord k, Monoid k) => Segment k -> a -> SegmentMap k a
-singleton s@(Segment lo hi) a = SegmentMap $ FT.singleton $ Node s a
+singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentMap k a
+singleton s@(Segment lo hi) a = SegmentMap $ OrderedMap $ FT.singleton $ Node (Min lo) (s, a)
 
-delete :: forall k a. (Monoid k, Ord k, Enum k, Eq a)
+delete :: forall k a. (Bounded k, Ord k, Enum k, Eq a)
        => Segment k
        -> SegmentMap k a
        -> SegmentMap k a
 delete = flip update Nothing
 
-update :: forall k a. (Monoid k, Ord k, Enum k, Eq a)
+update :: forall k a. (Ord k, Enum k, Bounded k, Eq a)
        => Segment k
        -> Maybe a
        -> SegmentMap k a
        -> SegmentMap k a
 update (Segment lo hi)   _        m | lo > hi    = m
 update _                 Nothing  m              = m
-update s@(Segment lo hi) (Just x) (SegmentMap t) =
-  SegmentMap $ cappedL lo lt >< Node s x <| cappedR hi rt
+update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
+  SegmentMap $ OrderedMap (cappedL lo lt >< Node (Min lo) (s, x) <| cappedR hi rt) -- Node s x <| cappedR hi rt
   where
-    (lt, ys) = FT.split (>= lo) t
-    (_, rt)  = FT.split (> hi) ys
+    (lt, ys) = FT.split (>= Min lo) t
+    (_, rt)  = FT.split (> Min hi) ys
+    -- SegmentMap $ OrderedMap (cappedL (Min lo) lt >< (Node (Min lo) (s, x) <| cappedR (Min hi) rt)) -- Node s x <| cappedR hi rt
+    -- where
+    --   (lt, ys) = FT.split (>= Min lo) t
+    --   (_, rt)  = FT.split (> Min hi) ys
 
-cappedL :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
+cappedL :: (Enum k, Ord k, Bounded k)
+  => k
+  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
+  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
 cappedL lo t = case viewr t of
   EmptyR   -> t
   ltp :> n -> maybe ltp (ltp |>) (capL lo n)
 
-cappedR :: (Enum k, Monoid k, Ord k) => k -> FingerTree k (Node k a) -> FingerTree k (Node k a)
+cappedR :: (Enum k, Ord k, Bounded k)
+  => k
+  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
+  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
 cappedR hi t = case viewl t of
   EmptyL   -> t
   n :< rtp -> maybe rtp (<| rtp) (capR hi n)
 
-capL :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
-capL rilo (Node (Segment lilo lihi) a) = if lihi < rilo
-  then Just $ Node (Segment lilo (pred rilo)) a
+capL :: (Ord k, Enum k)
+  => k
+  -> Node (Min k) (Segment k, a)
+  -> Maybe (Node (Min k) (Segment k, a))
+capL rilo (Node _ (Segment lilo lihi, a)) = if lihi < rilo
+  then Just $ Node (Min lilo) (Segment lilo (pred rilo), a)
   else Nothing
 
-capR :: (Ord k, Enum k) => k -> Node k a -> Maybe (Node k a)
-capR lihi (Node (Segment rilo rihi) a) = if lihi < rilo
-  then Just $ Node (Segment (succ lihi) rihi) a
+capR :: (Ord k, Enum k)
+  => k
+  -> Node (Min k) (Segment k, a)
+  -> Maybe (Node (Min k) (Segment k, a))
+capR lihi (Node _ (Segment rilo rihi, a)) = if lihi < rilo
+  then Just $ Node (Min rilo) (Segment (succ lihi) rihi, a)
   else Nothing
 
-fromList :: (Monoid v, Ord v, Enum v, Eq a) => [(Segment v, Maybe a)] -> SegmentMap v a
+fromList :: (Ord v, Enum v, Eq a, Bounded v)
+  => [(Segment v, Maybe a)]
+  -> SegmentMap v a
 fromList = foldr (uncurry update) empty
 
 {-
