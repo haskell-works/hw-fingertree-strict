@@ -146,7 +146,7 @@ update :: forall k a. (Ord k, Enum k, Bounded k, Eq a)
 update (Segment lo hi)   _        m | lo > hi    = m
 update _                 Nothing  m              = m
 update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
-  SegmentMap $ OrderedMap (cappedL lo lt >< Node (Min lo) (s, x) <| cappedR hi rt) -- Node s x <| cappedR hi rt
+  SegmentMap $ OrderedMap (cappedL lo lt >< Node (Min lo) (s, x) <| cappedR hi rt)
   where
     (lt, ys) = FT.split (>= Min lo) t
     (_, rt)  = FT.split (> Min hi) ys
