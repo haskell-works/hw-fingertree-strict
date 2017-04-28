@@ -40,7 +40,8 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict (
     -- * Segments
     Segment(..), point,
     -- * Segment maps
-    SegmentMap(..), empty, singleton
+    SegmentMap(..), empty, singleton,
+    update, fromList
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
