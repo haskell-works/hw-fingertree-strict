@@ -41,19 +41,25 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     Segment(..), point,
     -- * Segment maps
     SegmentMap(..),
+    OrderedMap(..),
     delete,
     empty,
     fromList,
     insert,
     singleton,
-    update
+    update,
+    segmentMapToList,
+
+    Node(..),
+    cappedL,
+    cappedR,
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
-import Data.Foldable       (Foldable (foldMap))
+import Data.Foldable       (Foldable (foldMap), toList)
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
 
@@ -109,8 +115,11 @@ instance Traversable (OrderedMap k) where
 instance Functor (SegmentMap k) where
     fmap f (SegmentMap t) = SegmentMap (fmap (fmap f) t)
 
-instance Foldable (SegmentMap k) where
-    foldMap f (SegmentMap t) = foldMap (foldMap f) t
+-- instance Foldable (SegmentMap k) where
+--     foldMap f (SegmentMap t) = foldMap (foldMap f) t
+
+segmentMapToList :: SegmentMap k a -> [(Segment k, a)]
+segmentMapToList (SegmentMap m) = toList m
 
 -- instance Traversable (SegmentMap k) where
 --     traverse f (SegmentMap t) =
@@ -183,6 +192,7 @@ capR lihi (Node _ (Segment rilo rihi, a)) = if lihi < rilo
   else Nothing
 
 fromList :: (Ord v, Enum v, Eq a, Bounded v)
-  => [(Segment v, Maybe a)]
+  => [(Segment v, a)]
   -> SegmentMap v a
-fromList = foldr (uncurry update) empty
+
+fromList = foldr (uncurry insert) empty
