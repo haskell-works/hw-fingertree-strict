@@ -56,7 +56,8 @@ module HaskellWorks.Data.FingerTree.Strict (
     -- * Transformation
     reverse,
     fmap', fmapWithPos, unsafeFmap,
-    traverse', traverseWithPos, unsafeTraverse
+    traverse', traverseWithPos, unsafeTraverse,
+    maybeHead, maybeLast
     -- * Example
     -- $example
     ) where
@@ -829,6 +830,16 @@ reverseDigit f (Four a b c d) = Four (f d) (f c) (f b) (f a)
 illegal_argument :: String -> a
 illegal_argument name =
     error $ "Logic error: " ++ name ++ " called with illegal argument"
+
+maybeHead :: Measured v a => FingerTree v a -> Maybe a
+maybeHead zs = case viewl zs of
+  EmptyL -> Nothing
+  n :< _ -> Just n
+
+maybeLast :: Measured v a => FingerTree v a -> Maybe a
+maybeLast zs = case viewr zs of
+  EmptyR -> Nothing
+  _ :> n -> Just n
 
 {- $example
 

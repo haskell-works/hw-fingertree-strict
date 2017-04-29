@@ -43,47 +43,50 @@ spec = describe "HaskellWorks.Data.SegmentMap.StrictSpec" $ do
       segmentMapToList initial `shouldBe` expected
 
     it "simple unit test" $ do
-      let initial = fromList [(Segment 1 10, "1-10"), (Segment 11 20, "11-20")] :: SegmentMap Int String
-      let updated = insert (Segment 5 15) "5-15" initial
-      let expected = [(Segment 1 4, "1-10"), (Segment 5 15, "5-15"), (Segment 16 20, "10-20")]
-      print initial
-      let     s = Segment 5 15
-              Segment lo hi = Segment 5 15
-              Just x = Just "5-15"
-              SegmentMap (OrderedMap t) = initial
-              (lt, ys) = FT.split (>= Max lo) t
-              (_, rt)  = FT.split (> Max hi) ys
-              resl = cappedL lo lt
-              resm = Node (Max lo) (s, x)
-              resr = cappedR hi rt
-              result = SegmentMap $ OrderedMap (resl >< resm <| resr)
-              in do
-          putStrLn $ "t: " <> show t
-          putStrLn $ "lo: " <> show lo
-          putStrLn $ "lt: " <> show lt
-          putStrLn $ "ys: " <> show ys
-          putStrLn $ "rt: " <> show rt
-          putStrLn $ "resl: " <> show resl
-          putStrLn $ "resm: " <> show resm
-          putStrLn $ "resr: " <> show resr
-          print result
-      print expected
+      let initial = fromList [(Segment 1 10, "A"), (Segment 11 20, "C")] :: SegmentMap Int String
+      let updated = insert (Segment 5 15) "B" initial
+      let expected = [(Segment 1 4, "A"), (Segment 5 15, "B"), (Segment 16 20, "C")]
+      -- let     s = Segment 5 15
+      --         Segment lo hi = Segment 5 15
+      --         Just x = Just "5-15"
+      --         SegmentMap (OrderedMap t) = initial
+      --         (lt, ys) = FT.split (>= Max lo) t
+      --         (zs, remainder) = FT.split (> Max hi) ys
+      --         xxxxx = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capR hi)
+      --         rt = xxxxx >< remainder
+      --         resl = cappedL lo lt
+      --         resm = Item (Max lo) (s, x)
+      --         resr = cappedR hi rt
+      --         result = SegmentMap $ OrderedMap (resl >< resm <| resr)
+      --         in do
+      --     putStrLn $ "t: " <> show t
+      --     putStrLn $ "lo: " <> show lo
+      --     putStrLn $ "lt: " <> show lt
+      --     putStrLn $ "ys: " <> show ys
+      --     putStrLn $ "zs: " <> show zs
+      --     putStrLn $ "rt: " <> show rt
+      --     putStrLn $ "xxxxx: " <> show xxxxx
+      --     putStrLn $ "resl: " <> show resl
+      --     putStrLn $ "resm: " <> show resm
+      --     putStrLn $ "resr: " <> show resr
+      --     print result
+      -- print expected
       segmentMapToList updated `shouldBe` expected
 
     describe "cappedL" $ do
-      let original = FT.Single (Node (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String))
+      let original = FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String))
       it "left of" $ do
         cappedL  5 original `shouldBe` FT.Empty
       it "overlapping" $ do
-        cappedL 15 original `shouldBe` FT.Single (Node (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 14}, "A" :: String))
+        cappedL 15 original `shouldBe` FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 14}, "A" :: String))
       it "right of" $ do
-        cappedL 25 original `shouldBe` FT.Single (Node (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String))
+        cappedL 25 original `shouldBe` FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String))
     describe "cappedR" $ do
-      let original = FT.Single (Node (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
+      let original = FT.Single (Item (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
       it "left of" $ do
-        cappedR 15 original `shouldBe` FT.Single (Node (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
+        cappedR 15 original `shouldBe` FT.Single (Item (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
       it "overlapping" $ do
-        cappedR 25 original `shouldBe` FT.Single (Node (Max (26 :: Int)) (Segment {low = 26 :: Int, high = 30}, "C" :: String))
+        cappedR 25 original `shouldBe` FT.Single (Item (Max (26 :: Int)) (Segment {low = 26 :: Int, high = 30}, "C" :: String))
       it "left of" $ do
         cappedR 35 original `shouldBe` FT.Empty
 
