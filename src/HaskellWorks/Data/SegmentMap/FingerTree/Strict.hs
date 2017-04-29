@@ -23,7 +23,7 @@
 --
 --  * Ralf Hinze and Ross Paterson,
 --    \"Finger trees: a simple general-purpose data structure\",
---    /Journal of Functional Programming/ 16:2 (2006) pp 197-217.
+--    /Journal of Functional Programmaxg/ 16:2 (2006) pp 197-217.
 --    <http://staff.city.ac.uk/~ross/papers/FingerTree.html>
 --
 -- An amortized running time is given for each operation, with /n/
@@ -50,9 +50,11 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     update,
     segmentMapToList,
 
-    Node(..),
+    Item(..),
     cappedL,
     cappedR,
+    capR,
+    capL
     ) where
 
 import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
@@ -76,30 +78,30 @@ data Segment k = Segment { low :: !k, high :: !k }
 point :: k -> Segment k
 point k = Segment k k
 
-data Node k a = Node !k !a deriving Show
+data Item k a = Item !k !a deriving (Eq, Show)
 
-instance Functor (Node k) where
-    fmap f (Node i t) = Node i (f t)
+instance Functor (Item k) where
+    fmap f (Item i t) = Item i (f t)
 
-instance Foldable (Node k) where
-    foldMap f (Node _ x) = f x
+instance Foldable (Item k) where
+    foldMap f (Item _ x) = f x
 
-instance Traversable (Node k) where
-    traverse f (Node i x) = Node i <$> f x
+instance Traversable (Item k) where
+    traverse f (Item i x) = Item i <$> f x
 
 instance (Monoid k) => Measured k (Segment k) where
   measure = low
 
-instance (Monoid k) => Measured k (Node k a) where
-  measure (Node k _) = k
+instance (Monoid k) => Measured k (Item k a) where
+  measure (Item k _) = k
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 
-newtype OrderedMap k a = OrderedMap (FingerTree k (Node k a)) deriving Show
+newtype OrderedMap k a = OrderedMap (FingerTree k (Item k a)) deriving Show
 
-newtype SegmentMap k a = SegmentMap (OrderedMap (Min k) (Segment k, a)) deriving Show
+newtype SegmentMap k a = SegmentMap (OrderedMap (Max k) (Segment k, a)) deriving Show
 
 -- ordered lexicographically by segment start
 
@@ -131,7 +133,7 @@ empty = SegmentMap (OrderedMap FT.empty)
 
 -- | /O(1)/.  Segment map with a single entry.
 singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentMap k a
-singleton s@(Segment lo hi) a = SegmentMap $ OrderedMap $ FT.singleton $ Node (Min lo) (s, a)
+singleton s@(Segment lo hi) a = SegmentMap $ OrderedMap $ FT.singleton $ Item (Max lo) (s, a)
 
 delete :: forall k a. (Bounded k, Ord k, Enum k, Eq a)
        => Segment k
@@ -154,42 +156,46 @@ update :: forall k a. (Ord k, Enum k, Bounded k, Eq a)
 update (Segment lo hi)   _        m | lo > hi    = m
 update _                 Nothing  m              = m
 update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
-  SegmentMap $ OrderedMap (cappedL lo lt >< Node (Min lo) (s, x) <| cappedR hi rt)
+  SegmentMap $ OrderedMap (cappedL lo lt >< Item (Max lo) (s, x) <| cappedR hi rt)
   where
-    (lt, ys) = FT.split (>= Min lo) t
-    (_, rt)  = FT.split (> Min hi) ys
+    (lt, ys) = FT.split (>= Max lo) t
+    (zs, remainder) = FT.split (> Max hi) ys
+    e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capR hi)
+    rt = e >< remainder
 
 cappedL :: (Enum k, Ord k, Bounded k)
   => k
-  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
-  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
+  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
 cappedL lo t = case viewr t of
   EmptyR   -> t
   ltp :> n -> maybe ltp (ltp |>) (capL lo n)
 
 cappedR :: (Enum k, Ord k, Bounded k)
   => k
-  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
-  -> FingerTree (Min k) (Node (Min k) (Segment k, a))
+  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
 cappedR hi t = case viewl t of
   EmptyL   -> t
   n :< rtp -> maybe rtp (<| rtp) (capR hi n)
 
 capL :: (Ord k, Enum k)
   => k
-  -> Node (Min k) (Segment k, a)
-  -> Maybe (Node (Min k) (Segment k, a))
-capL rilo (Node _ (Segment lilo lihi, a)) = if lihi < rilo
-  then Just $ Node (Min lilo) (Segment lilo (pred rilo), a)
-  else Nothing
+  -> Item (Max k) (Segment k, a)
+  -> Maybe (Item (Max k) (Segment k, a))
+capL rilo n@(Item _ (Segment lilo lihi, a))
+  | rilo <  lilo = Nothing
+  | rilo <= lihi = Just $ Item (Max lilo) (Segment lilo (pred rilo), a)
+  | otherwise    = Just n
 
 capR :: (Ord k, Enum k)
   => k
-  -> Node (Min k) (Segment k, a)
-  -> Maybe (Node (Min k) (Segment k, a))
-capR lihi (Node _ (Segment rilo rihi, a)) = if lihi < rilo
-  then Just $ Node (Min (succ lihi)) (Segment (succ lihi) rihi, a)
-  else Nothing
+  -> Item (Max k) (Segment k, a)
+  -> Maybe (Item (Max k) (Segment k, a))
+capR lihi n@(Item _ (Segment rilo rihi, a))
+  | lihi <  rilo = Just n
+  | lihi <= rihi = Just $ Item (Max (succ lihi)) (Segment (succ lihi) rihi, a)
+  | otherwise    = Nothing
 
 fromList :: (Ord v, Enum v, Eq a, Bounded v)
   => [(Segment v, a)]

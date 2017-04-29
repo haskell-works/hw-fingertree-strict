@@ -56,7 +56,8 @@ module HaskellWorks.Data.FingerTree.Strict (
     -- * Transformation
     reverse,
     fmap', fmapWithPos, unsafeFmap,
-    traverse', traverseWithPos, unsafeTraverse
+    traverse', traverseWithPos, unsafeTraverse,
+    maybeHead, maybeLast
     -- * Example
     -- $example
     ) where
@@ -163,9 +164,9 @@ data FingerTree v a
     = Empty
     | Single !a
     | Deep !v !(Digit a) !(FingerTree v (Node v a)) !(Digit a)
-#if TESTING
+-- #if TESTING
     deriving (Show)
-#endif
+-- #endif
 
 deep ::  (Measured v a) =>
      Digit a -> FingerTree v (Node v a) -> Digit a -> FingerTree v a
@@ -189,11 +190,11 @@ instance Eq a => Eq (FingerTree v a) where
 instance Ord a => Ord (FingerTree v a) where
     compare xs ys = compare (toList xs) (toList ys)
 
-#if !TESTING
-instance Show a => Show (FingerTree v a) where
-    showsPrec p xs = showParen (p > 10) $
-        showString "fromList " . shows (toList xs)
-#endif
+-- #if !TESTING
+-- instance Show a => Show (FingerTree v a) where
+--     showsPrec p xs = showParen (p > 10) $
+--         showString "fromList " . shows (toList xs)
+-- #endif
 
 -- | Like 'fmap', but with a more constrained type.
 fmap' :: (Measured v1 a1, Measured v2 a2) =>
@@ -829,6 +830,16 @@ reverseDigit f (Four a b c d) = Four (f d) (f c) (f b) (f a)
 illegal_argument :: String -> a
 illegal_argument name =
     error $ "Logic error: " ++ name ++ " called with illegal argument"
+
+maybeHead :: Measured v a => FingerTree v a -> Maybe a
+maybeHead zs = case viewl zs of
+  EmptyL -> Nothing
+  n :< _ -> Just n
+
+maybeLast :: Measured v a => FingerTree v a -> Maybe a
+maybeLast zs = case viewr zs of
+  EmptyR -> Nothing
+  _ :> n -> Just n
 
 {- $example
 
