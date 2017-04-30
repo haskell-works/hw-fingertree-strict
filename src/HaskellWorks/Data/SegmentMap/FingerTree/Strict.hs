@@ -64,6 +64,8 @@ import Data.Foldable       (Foldable (foldMap), toList)
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
 
+infixr 5 >*<
+
 ----------------------------------
 -- 4.8 Application: segment trees
 ----------------------------------
@@ -147,6 +149,19 @@ insert :: forall k a. (Bounded k, Ord k, Enum k, Eq a, Show k, Show a)
        -> SegmentMap k a
 insert s a = update s (Just a)
 
+(>*<) :: (Ord k, Enum k, Bounded k, Eq a)
+      => FingerTree (Max k) (Item (Max k) (Segment k, a))
+      -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+      -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+(>*<) lt rt = case viewr lt of
+  EmptyR          -> rt
+  treeL :> Item _ (Segment loL hiL, itemL)  -> case viewl rt of
+    EmptyL         -> lt
+    Item _ (Segment loR hiR, itemR) :< treeR ->
+        if succ hiL >= loR && itemL == itemR
+          then treeL >< FT.singleton (Item (Max loL) (Segment loL hiR, itemL)) >< treeR
+          else lt >< rt
+
 update :: forall k a. (Ord k, Enum k, Bounded k, Eq a, Show k, Show a)
        => Segment k
        -> Maybe a
@@ -155,25 +170,14 @@ update :: forall k a. (Ord k, Enum k, Bounded k, Eq a, Show k, Show a)
 update (Segment lo hi)   _        m | lo > hi    = m
 update _                 Nothing  m              = m
 update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
-  -- let !_ = trace ("cccc: " <> show cccc) ()
-  --     !_ = trace ("bbbb: " <> show bbbb) ()
-  --     !_ = trace ("at: " <> show at) ()
-  --     !_ = trace ("rt: " <> show rt) ()
-  --     !_ = trace ("e: " <> show e) ()
-  --     !_ = trace ("zs: " <> show zs) ()
-  --     !_ = trace ("remainder: " <> show remainder) ()
-  --     !_ = trace ("fstPivotRt: " <> show fstPivotRt) ()
-  --     !_ = trace ("fstPivotLt: " <> show fstPivotLt) ()
-  --     !_ = trace ("t: " <> show t) ()
-  -- in
-  SegmentMap $ OrderedMap (at >< bbbb <| cccc)
+  SegmentMap $ OrderedMap (at >*< bbbb >*< cccc)
   where
     (fstPivotLt, fstPivotRt) = FT.split (>= Max lo) t
     (at, atSurplus) = cappedL lo fstPivotLt
-    (zs, remainder) = FT.split (> Max hi) (atSurplus >< fstPivotRt)
+    (zs, remainder) = FT.split (> Max hi) (atSurplus >*< fstPivotRt)
     e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capM hi)
-    rt = e >< remainder
-    bbbb = Item (Max lo) (s, x)
+    rt = e >*< remainder
+    bbbb = FT.singleton (Item (Max lo) (s, x))
     cccc = cappedM hi rt
 
 cappedL :: (Enum k, Ord k, Bounded k, Show k)

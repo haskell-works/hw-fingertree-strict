@@ -65,6 +65,8 @@ import Data.Traversable    (Traversable (traverse))
 
 {-# ANN module ("HLint: ignore Reduce duplication"  :: String) #-}
 
+infixr 5 >*<
+
 ----------------------------------
 -- 4.8 Application: segment trees
 ----------------------------------
