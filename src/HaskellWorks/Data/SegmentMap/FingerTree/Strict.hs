@@ -56,14 +56,13 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     cappedM
     ) where
 
-import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
+import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><))
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
 import Data.Foldable       (Foldable (foldMap), toList)
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
-import Debug.Trace
 
 ----------------------------------
 -- 4.8 Application: segment trees
