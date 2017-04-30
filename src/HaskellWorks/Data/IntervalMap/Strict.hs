@@ -35,7 +35,7 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.IntervalMap.FingerTree.Strict (
+module HaskellWorks.Data.IntervalMap.Strict (
     -- * Intervals
     Interval(..), point,
     -- * Interval maps

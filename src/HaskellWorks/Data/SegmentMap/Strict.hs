@@ -37,7 +37,7 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.SegmentMap.FingerTree.Strict
+module HaskellWorks.Data.SegmentMap.Strict
   ( -- * Segments
     Segment(..), point,
     -- * Segment maps
@@ -56,7 +56,10 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     cappedM
     ) where
 
-import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><))
+import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><))
+import HaskellWorks.Data.Item.Strict
+import HaskellWorks.Data.Segment.Strict
+
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
@@ -69,32 +72,6 @@ infixr 5 >*<
 ----------------------------------
 -- 4.8 Application: segment trees
 ----------------------------------
-
--- | A closed segment.  The lower bound should be less than or equal
--- to the higher bound.
-data Segment k = Segment { low :: !k, high :: !k }
-    deriving (Eq, Ord, Show)
-
--- | An segment in which the lower and upper bounds are equal.
-point :: k -> Segment k
-point k = Segment k k
-
-data Item k a = Item !k !a deriving (Eq, Show)
-
-instance Functor (Item k) where
-    fmap f (Item i t) = Item i (f t)
-
-instance Foldable (Item k) where
-    foldMap f (Item _ x) = f x
-
-instance Traversable (Item k) where
-    traverse f (Item i x) = Item i <$> f x
-
-instance (Monoid k) => Measured k (Segment k) where
-  measure = low
-
-instance (Monoid k) => Measured k (Item k a) where
-  measure (Item k _) = k
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
