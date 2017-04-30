@@ -37,7 +37,7 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.SegmentMap.FingerTree.Strict
+module HaskellWorks.Data.SegmentMap.Strict
   ( -- * Segments
     Segment(..), point,
     -- * Segment maps
@@ -56,44 +56,22 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     cappedM
     ) where
 
-import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
+import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), ViewR (..), viewl, viewr, (<|), (><))
+import HaskellWorks.Data.Item.Strict
+import HaskellWorks.Data.Segment.Strict
+
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
 import Data.Foldable       (Foldable (foldMap), toList)
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
-import Debug.Trace
+
+infixr 5 >*<
 
 ----------------------------------
 -- 4.8 Application: segment trees
 ----------------------------------
-
--- | A closed segment.  The lower bound should be less than or equal
--- to the higher bound.
-data Segment k = Segment { low :: !k, high :: !k }
-    deriving (Eq, Ord, Show)
-
--- | An segment in which the lower and upper bounds are equal.
-point :: k -> Segment k
-point k = Segment k k
-
-data Item k a = Item !k !a deriving (Eq, Show)
-
-instance Functor (Item k) where
-    fmap f (Item i t) = Item i (f t)
-
-instance Foldable (Item k) where
-    foldMap f (Item _ x) = f x
-
-instance Traversable (Item k) where
-    traverse f (Item i x) = Item i <$> f x
-
-instance (Monoid k) => Measured k (Segment k) where
-  measure = low
-
-instance (Monoid k) => Measured k (Item k a) where
-  measure (Item k _) = k
 
 -- | Map of closed segments, possibly with duplicates.
 -- The 'Foldable' and 'Traversable' instances process the segments in
@@ -148,6 +126,19 @@ insert :: forall k a. (Bounded k, Ord k, Enum k, Eq a, Show k, Show a)
        -> SegmentMap k a
 insert s a = update s (Just a)
 
+(>*<) :: (Ord k, Enum k, Bounded k, Eq a)
+      => FingerTree (Max k) (Item (Max k) (Segment k, a))
+      -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+      -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+(>*<) lt rt = case viewr lt of
+  EmptyR          -> rt
+  treeL :> Item _ (Segment loL hiL, itemL)  -> case viewl rt of
+    EmptyL         -> lt
+    Item _ (Segment loR hiR, itemR) :< treeR ->
+        if succ hiL >= loR && itemL == itemR
+          then treeL >< FT.singleton (Item (Max loL) (Segment loL hiR, itemL)) >< treeR
+          else lt >< rt
+
 update :: forall k a. (Ord k, Enum k, Bounded k, Eq a, Show k, Show a)
        => Segment k
        -> Maybe a
@@ -156,25 +147,14 @@ update :: forall k a. (Ord k, Enum k, Bounded k, Eq a, Show k, Show a)
 update (Segment lo hi)   _        m | lo > hi    = m
 update _                 Nothing  m              = m
 update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
-  -- let !_ = trace ("cccc: " <> show cccc) ()
-  --     !_ = trace ("bbbb: " <> show bbbb) ()
-  --     !_ = trace ("at: " <> show at) ()
-  --     !_ = trace ("rt: " <> show rt) ()
-  --     !_ = trace ("e: " <> show e) ()
-  --     !_ = trace ("zs: " <> show zs) ()
-  --     !_ = trace ("remainder: " <> show remainder) ()
-  --     !_ = trace ("fstPivotRt: " <> show fstPivotRt) ()
-  --     !_ = trace ("fstPivotLt: " <> show fstPivotLt) ()
-  --     !_ = trace ("t: " <> show t) ()
-  -- in
-  SegmentMap $ OrderedMap (at >< bbbb <| cccc)
+  SegmentMap $ OrderedMap (at >*< bbbb >*< cccc)
   where
     (fstPivotLt, fstPivotRt) = FT.split (>= Max lo) t
     (at, atSurplus) = cappedL lo fstPivotLt
-    (zs, remainder) = FT.split (> Max hi) (atSurplus >< fstPivotRt)
+    (zs, remainder) = FT.split (> Max hi) (atSurplus >*< fstPivotRt)
     e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capM hi)
-    rt = e >< remainder
-    bbbb = Item (Max lo) (s, x)
+    rt = e >*< remainder
+    bbbb = FT.singleton (Item (Max lo) (s, x))
     cccc = cappedM hi rt
 
 cappedL :: (Enum k, Ord k, Bounded k, Show k)

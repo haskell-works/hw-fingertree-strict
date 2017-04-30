@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module HaskellWorks.Data.SegmentMap.FingerTree.StrictSpec
+module HaskellWorks.Data.SegmentMap.StrictSpec
   ( spec
   ) where
 
@@ -9,18 +9,16 @@ import Data.Foldable
 
 import Control.Monad.IO.Class
 import Data.Semigroup
-import HaskellWorks.Data.SegmentMap.FingerTree.Strict
+import HaskellWorks.Data.FingerTree.Strict (ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
+import HaskellWorks.Data.SegmentMap.Strict
+
+import qualified HaskellWorks.Data.FingerTree.Strict as FT
+import qualified HaskellWorks.Data.SegmentMap.Strict as S (fromList)
+import qualified Hedgehog.Gen                        as Gen
+import qualified Hedgehog.Range                      as Range
+
 import HaskellWorks.Hspec.Hedgehog
 import Hedgehog
-import Test.Hspec
-
-import HaskellWorks.Data.FingerTree.Strict (ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
-
-import qualified HaskellWorks.Data.FingerTree.Strict            as FT
-import qualified HaskellWorks.Data.SegmentMap.FingerTree.Strict as S (fromList)
-import qualified Hedgehog.Gen                                   as Gen
-import qualified Hedgehog.Range                                 as Range
-
 import Test.Hspec
 
 {-# ANN module ("HLint: ignore Redundant do"  :: String) #-}

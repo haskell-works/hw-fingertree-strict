@@ -39,7 +39,7 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.PriorityQueue.FingerTree.Strict (
+module HaskellWorks.Data.PriorityQueue.Strict (
     PQueue,
     -- * Construction
     empty,
