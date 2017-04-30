@@ -7,15 +7,14 @@ module HaskellWorks.Data.SegmentMap.FingerTree.StrictSpec
 
 import Data.Foldable
 
+import Control.Monad.IO.Class
 import Data.Semigroup
 import HaskellWorks.Data.SegmentMap.FingerTree.Strict
 import HaskellWorks.Hspec.Hedgehog
 import Hedgehog
 import Test.Hspec
 
-import Debug.Trace
-
-import HaskellWorks.Data.FingerTree.Strict (ViewR(..), ViewL (..), viewr, viewl, (<|), (|>), (><))
+import HaskellWorks.Data.FingerTree.Strict (ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
 
 import qualified HaskellWorks.Data.FingerTree.Strict            as FT
 import qualified HaskellWorks.Data.SegmentMap.FingerTree.Strict as S (fromList)
@@ -25,6 +24,9 @@ import qualified Hedgehog.Range                                 as Range
 import Test.Hspec
 
 {-# ANN module ("HLint: ignore Redundant do"  :: String) #-}
+
+fallbackTo :: Bool
+fallbackTo = True
 
 spec :: Spec
 spec = describe "HaskellWorks.Data.SegmentMap.StrictSpec" $ do
@@ -37,58 +39,106 @@ spec = describe "HaskellWorks.Data.SegmentMap.StrictSpec" $ do
       let emptySM2 :: SegmentMap Int Int = S.fromList []
       segmentMapToList emptySM2 `shouldBe` segmentMapToList emptySM
 
-    it "simpler unit test" $ do
+    it "fromList with no overlap works" $ do
       let initial = fromList [(Segment 1 10, "1-10"), (Segment 11 20, "11-20")] :: SegmentMap Int String
       let expected = [(Segment 1 10, "1-10"), (Segment 11 20, "11-20")]
       segmentMapToList initial `shouldBe` expected
 
-    it "simple unit test" $ do
+    it "insert with overlap works" $ do
+      let initial = fromList [(Segment 1 10, "A"), (Segment 21 30, "C")] :: SegmentMap Int String
+      let updated = insert (Segment 11 20) "B" initial
+      let expected = [(Segment 1 10, "A"), (Segment 11 20, "B"), (Segment 21 30, "C")]
+      segmentMapToList updated `shouldBe` expected
+
+    it "insert with overlap works" $ do
       let initial = fromList [(Segment 1 10, "A"), (Segment 11 20, "C")] :: SegmentMap Int String
       let updated = insert (Segment 5 15) "B" initial
       let expected = [(Segment 1 4, "A"), (Segment 5 15, "B"), (Segment 16 20, "C")]
-      -- let     s = Segment 5 15
-      --         Segment lo hi = Segment 5 15
-      --         Just x = Just "5-15"
-      --         SegmentMap (OrderedMap t) = initial
-      --         (lt, ys) = FT.split (>= Max lo) t
-      --         (zs, remainder) = FT.split (> Max hi) ys
-      --         xxxxx = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capR hi)
-      --         rt = xxxxx >< remainder
-      --         resl = cappedL lo lt
-      --         resm = Item (Max lo) (s, x)
-      --         resr = cappedR hi rt
-      --         result = SegmentMap $ OrderedMap (resl >< resm <| resr)
-      --         in do
-      --     putStrLn $ "t: " <> show t
-      --     putStrLn $ "lo: " <> show lo
-      --     putStrLn $ "lt: " <> show lt
-      --     putStrLn $ "ys: " <> show ys
-      --     putStrLn $ "zs: " <> show zs
-      --     putStrLn $ "rt: " <> show rt
-      --     putStrLn $ "xxxxx: " <> show xxxxx
-      --     putStrLn $ "resl: " <> show resl
-      --     putStrLn $ "resm: " <> show resm
-      --     putStrLn $ "resr: " <> show resr
-      --     print result
-      -- print expected
       segmentMapToList updated `shouldBe` expected
+
+    it "fromList of two segments in order possibly overlapping" $ do
+      require $ property $ do
+        (Segment aLt aRt, Segment bLt bRt) <- forAll $ do
+          aLt <- Gen.int (Range.linear 1   100)
+          bRt <- Gen.int (Range.linear aLt 100)
+          aRt <- Gen.int (Range.linear aLt bRt)
+          bLt <- Gen.int (Range.linear aLt bRt)
+          return (Segment aLt aRt, Segment bLt bRt)
+        let initial = [(Segment aLt aRt, "A"), (Segment bLt bRt, "B")] :: [(Segment Int, String)]
+        let actual = segmentMapToList (fromList initial)
+        let aRt' = aRt `min` pred bLt
+        case () of
+          () | aLt == bRt               -> actual === [(Segment aLt bRt , "B")]
+          () | bLt <= aLt && bRt >= aRt -> actual === [(Segment bLt bRt , "B")]
+          () | aRt >= bLt               -> actual === [(Segment aLt aRt', "A"), (Segment bLt bRt, "B")]
+          () | fallbackTo               -> actual === [(Segment aLt aRt , "A"), (Segment bLt bRt, "B")]
+
+    it "fromList [(Segment 1 1, \"A\"), (Segment 1 1, \"B\")]" $ do
+      let initial = [(Segment 1 1, "A"), (Segment 1 1, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 1, "B")]
+
+    it "fromList [(Segment 1 2, \"A\"), (Segment 1 1, \"B\")]" $ do
+      let initial = [(Segment 1 2, "A"), (Segment 1 1, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 1, "B"), (Segment 2 2, "A")]
+
+    it "fromList [(Segment 1 2, \"A\"), (Segment 2 2, \"B\")]" $ do
+      let initial = [(Segment 1 2, "A"), (Segment 2 2, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 1, "A"), (Segment 2 2, "B")]
+
+    it "fromList [(Segment 1 2, \"A\"), (Segment 1 2, \"B\")]" $ do
+      let initial = [(Segment 1 2, "A"), (Segment 1 2, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 2, "B")]
+
+    it "fromList [(Segment 1 3, \"A\"), (Segment 1 1, \"B\")]" $ do
+      let initial = [(Segment 1 3, "A"), (Segment 1 1, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 1, "B"), (Segment 2 3, "A")]
+
+    it "fromList [(Segment 1 3, \"A\"), (Segment 3 3, \"B\")]" $ do
+      let initial = [(Segment 1 3, "A"), (Segment 3 3, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 2, "A"), (Segment 3 3, "B")]
+
+    it "fromList [(Segment 1 3, \"A\"), (Segment 2 2, \"B\")]" $ do
+      let initial = [(Segment 1 3, "A"), (Segment 2 2, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 1, "A"), (Segment 2 2, "B"), (Segment 3 3, "A")]
+
+    it "fromList [(Segment 1 3, \"A\"), (Segment 0 1, \"B\")]" $ do
+      let initial = [(Segment 1 3, "A"), (Segment 0 1, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 0 1, "B"), (Segment 2 3, "A")]
+
+    it "fromList [(Segment 1 3, \"A\"), (Segment 3 4 \"B\")]" $ do
+      let initial = [(Segment 1 3, "A"), (Segment 3 4, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 2, "A"), (Segment 3 4, "B")]
+
+    it "fromList [(Segment 1 2, \"A\"), (Segment 2 7, \"B\")]" $ do
+      let initial = [(Segment 1 2, "A"), (Segment 2 7, "B")] :: [(Segment Int, String)]
+      let actual = segmentMapToList (fromList initial)
+      actual `shouldBe` [(Segment 1 1, "A"), (Segment 2 7, "B")]
 
     describe "cappedL" $ do
       let original = FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String))
       it "left of" $ do
-        cappedL  5 original `shouldBe` FT.Empty
+        cappedL  5 original `shouldBe` (FT.Empty, FT.Empty)
       it "overlapping" $ do
-        cappedL 15 original `shouldBe` FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 14}, "A" :: String))
+        cappedL 15 original `shouldBe` (FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 14}, "A" :: String)), FT.Single (Item (Max 15) (Segment {low = 15, high = 20}, "A")))
       it "right of" $ do
-        cappedL 25 original `shouldBe` FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String))
-    describe "cappedR" $ do
+        cappedL 25 original `shouldBe` (FT.Single (Item (Max (11  :: Int)) (Segment {low = 11 :: Int, high = 20}, "A" :: String)), FT.Empty)
+    describe "cappedM" $ do
       let original = FT.Single (Item (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
       it "left of" $ do
-        cappedR 15 original `shouldBe` FT.Single (Item (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
+        cappedM 15 original `shouldBe` FT.Single (Item (Max (21 :: Int)) (Segment {low = 21 :: Int, high = 30}, "C" :: String))
       it "overlapping" $ do
-        cappedR 25 original `shouldBe` FT.Single (Item (Max (26 :: Int)) (Segment {low = 26 :: Int, high = 30}, "C" :: String))
+        cappedM 25 original `shouldBe` FT.Single (Item (Max (26 :: Int)) (Segment {low = 26 :: Int, high = 30}, "C" :: String))
       it "left of" $ do
-        cappedR 35 original `shouldBe` FT.Empty
+        cappedM 35 original `shouldBe` FT.Empty
 
     it "should have require function that checks hedgehog properties" $ do
       require $ property $ do

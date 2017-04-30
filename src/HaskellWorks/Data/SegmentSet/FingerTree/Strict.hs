@@ -1,4 +1,3 @@
--- {-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -37,11 +36,11 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.SegmentMap.FingerTree.Strict
+module HaskellWorks.Data.SegmentSet.FingerTree.Strict
   ( -- * Segments
     Segment(..), point,
     -- * Segment maps
-    SegmentMap(..),
+    SegmentSet(..),
     OrderedMap(..),
     delete,
     empty,
@@ -49,7 +48,7 @@ module HaskellWorks.Data.SegmentMap.FingerTree.Strict
     insert,
     singleton,
     update,
-    segmentMapToList,
+    segmentSetToList,
 
     Item(..),
     cappedL,
@@ -64,6 +63,8 @@ import Data.Foldable       (Foldable (foldMap), toList)
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
 import Debug.Trace
+
+{-# ANN module ("HLint: ignore Reduce duplication"  :: String) #-}
 
 ----------------------------------
 -- 4.8 Application: segment trees
@@ -101,7 +102,7 @@ instance (Monoid k) => Measured k (Item k a) where
 
 newtype OrderedMap k a = OrderedMap (FingerTree k (Item k a)) deriving Show
 
-newtype SegmentMap k a = SegmentMap (OrderedMap (Max k) (Segment k, a)) deriving Show
+newtype SegmentSet k = SegmentSet (OrderedMap (Max k) (Segment k)) deriving Show
 
 -- ordered lexicographically by segment start
 
@@ -114,109 +115,108 @@ instance Foldable (OrderedMap k) where
 instance Traversable (OrderedMap k) where
     traverse f (OrderedMap t) = OrderedMap <$> FT.unsafeTraverse (traverse f) t
 
-instance Functor (SegmentMap k) where
-    fmap f (SegmentMap t) = SegmentMap (fmap (fmap f) t)
+-- instance Foldable (SegmentSet k) where
+--     foldMap f (SegmentSet t) = foldMap (foldMap f) t
 
--- instance Foldable (SegmentMap k) where
---     foldMap f (SegmentMap t) = foldMap (foldMap f) t
+segmentSetToList :: SegmentSet k -> [Segment k]
+segmentSetToList (SegmentSet m) = toList m
 
-segmentMapToList :: SegmentMap k a -> [(Segment k, a)]
-segmentMapToList (SegmentMap m) = toList m
-
--- instance Traversable (SegmentMap k) where
---     traverse f (SegmentMap t) =
---         SegmentMap <$> FT.unsafeTraverse (traverse f) t
+-- instance Traversable (SegmentSet k) where
+--     traverse f (SegmentSet t) =
+--         SegmentSet <$> FT.unsafeTraverse (traverse f) t
 
 -- | /O(1)/.  The empty segment map.
-empty :: (Ord k, Bounded k) => SegmentMap k a
-empty = SegmentMap (OrderedMap FT.empty)
+empty :: (Ord k, Bounded k) => SegmentSet k
+empty = SegmentSet (OrderedMap FT.empty)
 
 -- | /O(1)/.  Segment map with a single entry.
-singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentMap k a
-singleton s@(Segment lo hi) a = SegmentMap $ OrderedMap $ FT.singleton $ Item (Max lo) (s, a)
+singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentSet k
+singleton s@(Segment lo hi) a = SegmentSet $ OrderedMap $ FT.singleton $ Item (Max lo) s
 
-delete :: forall k a. (Bounded k, Ord k, Enum k, Eq a, Show k, Show a)
+delete :: forall k a. (Bounded k, Ord k, Enum k, Show k)
        => Segment k
-       -> SegmentMap k a
-       -> SegmentMap k a
-delete = flip update Nothing
+       -> SegmentSet k
+       -> SegmentSet k
+delete = flip update False
 
-insert :: forall k a. (Bounded k, Ord k, Enum k, Eq a, Show k, Show a)
+insert :: forall k a. (Bounded k, Ord k, Enum k, Show k)
        => Segment k
-       -> a
-       -> SegmentMap k a
-       -> SegmentMap k a
-insert s a = update s (Just a)
+       -> SegmentSet k
+       -> SegmentSet k
+insert s = update s True
 
-update :: forall k a. (Ord k, Enum k, Bounded k, Eq a, Show k, Show a)
+(>*<) :: (Ord k, Enum k, Bounded k)
+      => FingerTree (Max k) (Item (Max k) (Segment k))
+      -> FingerTree (Max k) (Item (Max k) (Segment k))
+      -> FingerTree (Max k) (Item (Max k) (Segment k))
+(>*<) lt rt = case viewr lt of
+  EmptyR          -> rt
+  treeL :> Item _ (Segment loL hiL)  -> case viewl rt of
+    EmptyL         -> lt
+    Item _ (Segment loR hiR) :< treeR ->
+        if succ hiL >= loR
+          then treeL >< FT.singleton (Item (Max loL) (Segment loL hiR)) >< treeR
+          else lt >< rt
+
+update :: forall k a. (Ord k, Enum k, Bounded k, Show k)
        => Segment k
-       -> Maybe a
-       -> SegmentMap k a
-       -> SegmentMap k a
-update (Segment lo hi)   _        m | lo > hi    = m
-update _                 Nothing  m              = m
-update s@(Segment lo hi) (Just x) (SegmentMap (OrderedMap t)) =
-  -- let !_ = trace ("cccc: " <> show cccc) ()
-  --     !_ = trace ("bbbb: " <> show bbbb) ()
-  --     !_ = trace ("at: " <> show at) ()
-  --     !_ = trace ("rt: " <> show rt) ()
-  --     !_ = trace ("e: " <> show e) ()
-  --     !_ = trace ("zs: " <> show zs) ()
-  --     !_ = trace ("remainder: " <> show remainder) ()
-  --     !_ = trace ("fstPivotRt: " <> show fstPivotRt) ()
-  --     !_ = trace ("fstPivotLt: " <> show fstPivotLt) ()
-  --     !_ = trace ("t: " <> show t) ()
-  -- in
-  SegmentMap $ OrderedMap (at >< bbbb <| cccc)
+       -> Bool
+       -> SegmentSet k
+       -> SegmentSet k
+update (Segment lo hi) _      m | lo > hi    = m
+update (Segment lo hi) False  (SegmentSet (OrderedMap t)) =
+  SegmentSet $ OrderedMap (at >*< cccc)
   where
     (fstPivotLt, fstPivotRt) = FT.split (>= Max lo) t
     (at, atSurplus) = cappedL lo fstPivotLt
-    (zs, remainder) = FT.split (> Max hi) (atSurplus >< fstPivotRt)
+    (zs, remainder) = FT.split (> Max hi) (atSurplus >*< fstPivotRt)
     e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capM hi)
     rt = e >< remainder
-    bbbb = Item (Max lo) (s, x)
+    cccc = cappedM hi rt
+update s@(Segment lo hi) True   (SegmentSet (OrderedMap t)) =
+  SegmentSet $ OrderedMap (at >*< bbbb >*< cccc)
+  where
+    (fstPivotLt, fstPivotRt) = FT.split (>= Max lo) t
+    (at, atSurplus) = cappedL lo fstPivotLt
+    (zs, remainder) = FT.split (> Max hi) (atSurplus >*< fstPivotRt)
+    e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capM hi)
+    rt = e >< remainder
+    bbbb = FT.singleton (Item (Max lo) s)
     cccc = cappedM hi rt
 
 cappedL :: (Enum k, Ord k, Bounded k, Show k)
   => k
-  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
-  -> (FingerTree (Max k) (Item (Max k) (Segment k, a)), FingerTree (Max k) (Item (Max k) (Segment k, a)))
+  -> FingerTree (Max k) (Item (Max k) (Segment k))
+  -> (FingerTree (Max k) (Item (Max k) (Segment k)), FingerTree (Max k) (Item (Max k) (Segment k)))
 cappedL lo t = case viewr t of
   EmptyR      -> (FT.empty, FT.empty)
   ltp :> item -> resolve ltp item
-  where resolve ltp (Item _ (Segment lilo lihi, a))
+  where resolve ltp (Item _ (Segment lilo lihi))
             | lo <= lilo  = (ltp         , FT.empty)
             | lo <  lihi  = (ltp >< lPart, rPart   )
             | lo <= lihi  = (ltp >< lPart, FT.empty)
             | otherwise   = (t           , FT.empty)
-          where lPart = FT.singleton (Item (Max lilo) (Segment lilo (pred lo), a))
-                rPart = FT.singleton (Item (Max lo  ) (Segment lo   lihi     , a))
+          where lPart = FT.singleton (Item (Max lilo) (Segment lilo (pred lo)))
+                rPart = FT.singleton (Item (Max lo  ) (Segment lo   lihi     ))
 
-cappedM :: (Enum k, Ord k, Bounded k, Show k, Show a)
+cappedM :: (Enum k, Ord k, Bounded k, Show k)
   => k
-  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
-  -> FingerTree (Max k) (Item (Max k) (Segment k, a))
+  -> FingerTree (Max k) (Item (Max k) (Segment k))
+  -> FingerTree (Max k) (Item (Max k) (Segment k))
 cappedM hi t = case viewl t of
   EmptyL   -> t
   n :< rtp -> maybe rtp (<| rtp) (capM hi n)
 
-capM :: (Ord k, Enum k, Show k, Show a)
+capM :: (Ord k, Enum k, Show k)
   => k
-  -> Item (Max k) (Segment k, a)
-  -> Maybe (Item (Max k) (Segment k, a))
-capM lihi n@(Item _ (Segment rilo rihi, a))
-  -- let !_ = trace ("lihi: " <> show lihi) lihi in
-  -- let !_ = trace ("rilo: " <> show rilo) rilo in
-  -- let !_ = trace ("rihi: " <> show rihi) rihi in
-  -- let result = case () of
+  -> Item (Max k) (Segment k)
+  -> Maybe (Item (Max k) (Segment k))
+capM lihi n@(Item _ (Segment rilo rihi))
   | lihi < rilo = Just n
-  | lihi < rihi = Just $ Item (Max (succ lihi)) (Segment (succ lihi) rihi, a)
+  | lihi < rihi = Just $ Item (Max (succ lihi)) (Segment (succ lihi) rihi)
   | otherwise   = Nothing
-        -- in
-  -- let !_ = trace ("result: " <> show result) result in
-  -- result
 
-fromList :: (Ord v, Enum v, Eq a, Bounded v, Show v, Show a)
-  => [(Segment v, a)]
-  -> SegmentMap v a
-fromList = foldl (flip (uncurry insert)) empty
+fromList :: (Ord v, Enum v, Bounded v, Show v)
+  => [Segment v]
+  -> SegmentSet v
+fromList = foldl (flip insert) empty
