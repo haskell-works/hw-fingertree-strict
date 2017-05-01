@@ -32,12 +32,12 @@ genSegments :: Monad m => Gen m [Segment Int]
 genSegments = Gen.list (Range.linear 0 100) genSegment
 
 genIntSegment :: Monad m => Int -> Int -> Gen m (Segment Int)
-genIntSegment a b = do
-  a <- Gen.int (Range.linear a b)
-  b <- Gen.int (Range.linear a b)
+genIntSegment minInt maxInt = do
+  a <- Gen.int (Range.linear minInt maxInt)
+  b <- Gen.int (Range.linear minInt maxInt)
   return (Segment (a `min` b) (a `max` b))
 
 genOrderedIntSegments :: Monad m => Int -> Int -> Int -> Gen m [Segment Int]
-genOrderedIntSegments n a b = do
-  as <- Gen.list (Range.linear 0 (n * 2)) (Gen.int (Range.linear a b))
+genOrderedIntSegments n minInt maxInt = do
+  as <- Gen.list (Range.linear 0 (n * 2)) (Gen.int (Range.linear minInt maxInt))
   return $ unsafeNub (uncurry Segment <$> pairs (sort as))
