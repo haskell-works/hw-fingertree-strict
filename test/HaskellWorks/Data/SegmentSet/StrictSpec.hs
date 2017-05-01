@@ -6,6 +6,7 @@ module HaskellWorks.Data.SegmentSet.StrictSpec
   ) where
 
 import Data.Foldable
+import Data.List (sortBy)
 
 import Control.Monad.IO.Class
 import Data.Semigroup
@@ -73,12 +74,26 @@ spec = describe "HaskellWorks.Data.SegmentSet.StrictSpec" $ do
           () | succ aRt >= bLt          -> actual === [Segment aLt bRt]
           () | fallbackTo               -> actual === [Segment aLt aRt , Segment bLt bRt]
 
-    it "fromList of n segments should be ordered, non-overlapping" $ do
+    it "toList of n segments should be ordered, non-overlapping" $ do
       require $ property $ do
-        segments <- forAll genSegments
+        segments <- forAll $ genSegments 100 0 1000
         let sSet = fromList segments
         let lst  = segmentSetToList sSet
         monotonicSegments lst === True
+
+    it "deleting elements should produce a set with 'holes' in it" $ do
+      require $ property $ do
+        let (bot, top) = (0, 1000)
+        let sSet = singleton $ Segment bot top
+        deletions <- forAll $ genSegments 100 bot top
+        let deletedSet = segmentSetToList $ foldr delete sSet deletions
+        -- This is hacky. We're running the deletions through a Segment Set
+        -- to get an ordered, non-overlapping, merged version. This makes it
+        -- much easier to check the `inverse` property
+        let orderedDeletions = segmentSetToList $ fromList deletions
+        -- Check both directions of inversion.
+        deletedSet === invert bot top orderedDeletions
+        invert bot top deletedSet === orderedDeletions
 
     it "fromList [Segment 1 1, Segment 1 1]" $ do
       let initial = [Segment 1 1, Segment 1 1] :: [Segment Int]
@@ -172,6 +187,21 @@ spec = describe "HaskellWorks.Data.SegmentSet.StrictSpec" $ do
       require $ property $ do
         segments <- forAll (genOrderedIntSegments 100 1 100)
         segmentSetToList (fromList segments) === N.toList (N.fromList segments)
+
+-- Takes a min and max bound and a list of segments, and produces the inverse
+-- i.e. gives you segments where the holes are
+-- Assumes the input list is ordered and non-overlapping, and that all elements
+-- fall within (minB, maxB) inclusive.
+invert :: (Enum k, Eq k) => k -> k -> [Segment k] -> [Segment k]
+invert minB maxB [] = [Segment minB maxB]
+invert minB maxB (s:ss)
+  | minB == low s && maxB == high s = []
+  | minB == low s                   = theRest
+  | maxB == high s                  = [next]
+  | otherwise                       = next : theRest
+  where
+    next    = Segment minB (pred $ low s)
+    theRest = invert (succ $ high s) maxB ss
 
 monotonicSegments :: Ord k => [Segment k] -> Bool
 monotonicSegments (x1:x2:xs) = high x1 < low x2 && monotonicSegments (x2:xs)
