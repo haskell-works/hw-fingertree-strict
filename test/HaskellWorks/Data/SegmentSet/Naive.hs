@@ -53,8 +53,8 @@ overlaps (Segment s1 e1) (Segment s2 e2) = if s1 <= s2 then e1 >= s2 else e2 >= 
 minus :: (Ord a, Num a) => Segment a -> Segment a -> [Segment a]
 minus (Segment s e) (Segment fs fe) =
   let (ds, de) = (max s fs - fs, fe - min e fe)
-      as = if ds == 0 then Nothing else Just (Segment  fs           (fs + ds - 1 ))
-      bs = if de == 0 then Nothing else Just (Segment (fe - de + 1)  fe           )
+      as = if s <= fs then Nothing else Just (Segment  fs           (fs + ds - 1 ))
+      bs = if e >= fe then Nothing else Just (Segment (fe - de + 1)  fe           )
   in catMaybes [as, bs]
 
 merge :: (Ord a, Num a) => Maybe (Segment a) -> Segment a -> Maybe (Segment a) -> Segment a
