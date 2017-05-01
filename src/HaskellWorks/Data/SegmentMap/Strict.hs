@@ -12,14 +12,14 @@
 #endif
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Data.PriorityQueue.FingerTree
--- Copyright   :  (c) Ross Paterson 2008
+-- Module      :  Data.SegmentMap.Strict
+-- Copyright   :  (c) Arbor Networks 2017
 -- License     :  BSD-style
--- Maintainer  :  R.Paterson@city.ac.uk
+-- Maintainer  :  mayhem@arbor.net
 -- Stability   :  experimental
 -- Portability :  non-portable (MPTCs and functional dependencies)
 --
--- Interval maps implemented using the 'FingerTree' type, following
+-- Segment maps implemented using the 'FingerTree' type, following
 -- section 4.8 of
 --
 --  * Ralf Hinze and Ross Paterson,
@@ -28,7 +28,7 @@
 --    <http://staff.city.ac.uk/~ross/papers/FingerTree.html>
 --
 -- An amortized running time is given for each operation, with /n/
--- referring to the size of the priority queue.  These bounds hold even
+-- referring to the size of the map.  These bounds hold even
 -- in a persistent (shared) setting.
 --
 -- /Note/: Many of these operations have the same names as similar
