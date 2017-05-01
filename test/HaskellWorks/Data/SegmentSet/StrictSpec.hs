@@ -14,6 +14,7 @@ import HaskellWorks.Data.Gen
 import HaskellWorks.Data.SegmentSet.Strict
 
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
+import qualified HaskellWorks.Data.SegmentSet.Naive  as N
 import qualified HaskellWorks.Data.SegmentSet.Strict as S (fromList)
 import qualified Hedgehog.Gen                        as Gen
 import qualified Hedgehog.Range                      as Range
@@ -166,13 +167,13 @@ spec = describe "HaskellWorks.Data.SegmentSet.StrictSpec" $ do
       it "left of" $ do
         cappedM 35 original `shouldBe` FT.Empty
 
-    it "should have require function that checks hedgehog properties" $ do
+    it "should behave just live the naive version" $ do
+      pendingWith "Need to fix the naive case"
       require $ property $ do
-        x <- forAll (Gen.int Range.constantBounded)
-        x === x
+        segments <- forAll (genOrderedIntSegments 100 1 100)
+        segmentSetToList (fromList segments) === N.toList (N.fromList segments)
 
 monotonicSegments :: Ord k => [Segment k] -> Bool
 monotonicSegments (x1:x2:xs) = high x1 < low x2 && monotonicSegments (x2:xs)
 monotonicSegments [x1]       = True
 monotonicSegments []         = True
-
