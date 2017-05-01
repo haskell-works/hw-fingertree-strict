@@ -43,7 +43,8 @@ library
 test-suite hw-fingertree-strict-test
   type: exitcode-stdio-1.0
   default-language: Haskell2010
-  other-modules:        HaskellWorks.Data.SegmentMap.StrictSpec
+  other-modules:        HaskellWorks.Data.Gen
+                      , HaskellWorks.Data.SegmentMap.StrictSpec
                       , HaskellWorks.Data.SegmentSet.StrictSpec
                       , HaskellWorks.Data.SegmentSet.Naive
                       , HaskellWorks.Data.SegmentSet.NaiveSpec

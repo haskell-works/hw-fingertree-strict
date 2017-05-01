@@ -10,6 +10,7 @@ import Data.Foldable
 import Control.Monad.IO.Class
 import Data.Semigroup
 import HaskellWorks.Data.FingerTree.Strict (ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
+import HaskellWorks.Data.Gen
 import HaskellWorks.Data.SegmentSet.Strict
 
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
