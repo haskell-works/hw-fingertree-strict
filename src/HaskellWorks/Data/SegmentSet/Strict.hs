@@ -112,8 +112,8 @@ empty :: (Ord k, Bounded k) => SegmentSet k
 empty = SegmentSet (OrderedMap FT.empty)
 
 -- | /O(1)/.  Segment set with a single entry.
-singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentSet k
-singleton s@(Segment lo hi) a = SegmentSet $ OrderedMap $ FT.singleton $ Item (Max lo) s
+singleton :: (Bounded k, Ord k) => Segment k -> SegmentSet k
+singleton s@(Segment lo hi) = SegmentSet $ OrderedMap $ FT.singleton $ Item (Max lo) s
 
 -- | /O(log(n))/. Remove a segment from the set.
 -- Alias of update.

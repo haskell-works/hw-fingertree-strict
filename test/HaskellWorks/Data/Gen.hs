@@ -1,6 +1,5 @@
 module HaskellWorks.Data.Gen
-  ( genSegment
-  , genSegments
+  ( genSegments
   , genIntSegment
   , genOrderedIntSegments
   ) where
@@ -22,14 +21,8 @@ unsafeNub (a:b:bs) = if a == b then a:bs else a:unsafeNub (b:bs)
 unsafeNub (a:as)   = a:as
 unsafeNub []       = []
 
-genSegment :: Monad m => Gen m (Segment Int)
-genSegment = do
-    lt <- Gen.int (Range.linear 0 1000)
-    rt <- Gen.int (Range.linear lt 1000)
-    return $ Segment lt rt
-
-genSegments :: Monad m => Gen m [Segment Int]
-genSegments = Gen.list (Range.linear 0 100) genSegment
+genSegments :: Monad m => Int -> Int -> Int -> Gen m [Segment Int]
+genSegments len minInt maxInt = Gen.list (Range.linear 0 len) $ genIntSegment minInt maxInt
 
 genIntSegment :: Monad m => Int -> Int -> Gen m (Segment Int)
 genIntSegment minInt maxInt = do
