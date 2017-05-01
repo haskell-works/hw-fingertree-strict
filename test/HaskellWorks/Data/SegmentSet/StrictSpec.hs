@@ -71,6 +71,13 @@ spec = describe "HaskellWorks.Data.SegmentSet.StrictSpec" $ do
           () | succ aRt >= bLt          -> actual === [Segment aLt bRt]
           () | fallbackTo               -> actual === [Segment aLt aRt , Segment bLt bRt]
 
+    it "fromList of n segments should be ordered, non-overlapping" $ do
+      require $ property $ do
+        segments <- forAll genSegments
+        let sSet = fromList segments
+        let lst  = segmentSetToList sSet
+        monotonicSegments lst === True
+
     it "fromList [Segment 1 1, Segment 1 1]" $ do
       let initial = [Segment 1 1, Segment 1 1] :: [Segment Int]
       let actual = segmentSetToList (fromList initial)
@@ -162,3 +169,17 @@ spec = describe "HaskellWorks.Data.SegmentSet.StrictSpec" $ do
       require $ property $ do
         x <- forAll (Gen.int Range.constantBounded)
         x === x
+
+monotonicSegments :: Ord k => [Segment k] -> Bool
+monotonicSegments (x1:x2:xs) = high x1 < low x2 && monotonicSegments (x2:xs)
+monotonicSegments [x1]       = True
+monotonicSegments []         = True
+
+genSegment :: Monad m => Gen m (Segment Int)
+genSegment = do
+    lt <- Gen.int (Range.linear 0 1000)
+    rt <- Gen.int (Range.linear lt 1000)
+    return $ Segment lt rt
+
+genSegments :: Monad m => Gen m [Segment Int]
+genSegments = Gen.list (Range.linear 0 100) genSegment
