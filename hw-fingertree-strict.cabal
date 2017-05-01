@@ -45,6 +45,8 @@ test-suite hw-fingertree-strict-test
   default-language: Haskell2010
   other-modules:        HaskellWorks.Data.SegmentMap.StrictSpec
                       , HaskellWorks.Data.SegmentSet.StrictSpec
+                      , HaskellWorks.Data.SegmentSet.Naive
+                      , HaskellWorks.Data.SegmentSet.NaiveSpec
   hs-source-dirs:  test
   main-is:         Spec.hs
   cpp-options: -DTESTING
