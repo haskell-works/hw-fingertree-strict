@@ -183,7 +183,6 @@ spec = describe "HaskellWorks.Data.SegmentSet.StrictSpec" $ do
         cappedM 35 original `shouldBe` FT.Empty
 
     it "should behave just live the naive version" $ do
-      pendingWith "Need to fix the naive case"
       require $ property $ do
         segments <- forAll (genOrderedIntSegments 100 1 100)
         segmentSetToList (fromList segments) === N.toList (N.fromList segments)
