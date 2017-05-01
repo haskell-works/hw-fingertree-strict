@@ -10,6 +10,7 @@ import Data.Foldable
 import Control.Monad.IO.Class
 import Data.Semigroup
 import HaskellWorks.Data.FingerTree.Strict (ViewL (..), ViewR (..), viewl, viewr, (<|), (><), (|>))
+import HaskellWorks.Data.Gen
 import HaskellWorks.Data.SegmentSet.Strict
 
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
@@ -175,11 +176,3 @@ monotonicSegments (x1:x2:xs) = high x1 < low x2 && monotonicSegments (x2:xs)
 monotonicSegments [x1]       = True
 monotonicSegments []         = True
 
-genSegment :: Monad m => Gen m (Segment Int)
-genSegment = do
-    lt <- Gen.int (Range.linear 0 1000)
-    rt <- Gen.int (Range.linear lt 1000)
-    return $ Segment lt rt
-
-genSegments :: Monad m => Gen m [Segment Int]
-genSegments = Gen.list (Range.linear 0 100) genSegment
