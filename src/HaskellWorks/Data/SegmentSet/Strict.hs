@@ -66,7 +66,7 @@ import HaskellWorks.Data.Segment.Strict
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 import Control.Applicative ((<$>))
-import Data.Foldable       (Foldable (foldMap), toList)
+import Data.Foldable       (Foldable (foldMap), foldl', toList)
 import Data.Semigroup
 import Data.Traversable    (Traversable (traverse))
 
@@ -185,7 +185,7 @@ capM lihi n@(Item _ (Segment rilo rihi))
 fromList :: (Ord v, Enum v, Bounded v, Show v)
   => [Segment v]
   -> SegmentSet v
-fromList = foldl (flip insert) empty
+fromList = foldl' (flip insert) empty
 
 --------------------------------------------------------------------------------
 -- Private functions
