@@ -164,9 +164,7 @@ data FingerTree v a
     = Empty
     | Single !a
     | Deep !v !(Digit a) !(FingerTree v (Node v a)) !(Digit a)
--- #if TESTING
     deriving (Show)
--- #endif
 
 deep ::  (Measured v a) =>
      Digit a -> FingerTree v (Node v a) -> Digit a -> FingerTree v a

@@ -1,0 +1,33 @@
+version: 2.0
+jobs:
+  build:
+    working_directory: ~/build
+    docker:
+      - image: fpco/stack-build:latest
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: dot-stack
+      - restore_cache:
+          key: stack-work-{{ checksum "stack.yaml" }}
+
+      - run: stack setup
+      - run: stack build --test --no-run-tests 
+
+      - save_cache:
+          key: dot-stack
+          paths:
+            - ~/.stack
+
+      - save_cache:
+          key: stack-work-{{ checksum "stack.yaml" }}
+          paths: .stack-work
+
+      - run:
+          name: Tests
+          command: stack test
+
+      - run:
+          name: Test report
+          command: find . -path "*/test-reports/*" -exec mv {} ${CIRCLE_TEST_REPORTS} \;
