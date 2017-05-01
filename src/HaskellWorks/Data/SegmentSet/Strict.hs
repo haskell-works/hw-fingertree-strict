@@ -103,64 +103,48 @@ segmentSetToList (SegmentSet m) = toList m
 --     traverse f (SegmentSet t) =
 --         SegmentSet <$> FT.unsafeTraverse (traverse f) t
 
--- | /O(1)/.  The empty segment map.
+-- | /O(1)/.  The empty segment set.
 empty :: (Ord k, Bounded k) => SegmentSet k
 empty = SegmentSet (OrderedMap FT.empty)
 
--- | /O(1)/.  Segment map with a single entry.
+-- | /O(1)/.  Segment set with a single entry.
 singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentSet k
 singleton s@(Segment lo hi) a = SegmentSet $ OrderedMap $ FT.singleton $ Item (Max lo) s
 
+-- | /O(log(n))/. Remove a segment from the set.
+-- Alias of update.
 delete :: forall k a. (Bounded k, Ord k, Enum k, Show k)
        => Segment k
        -> SegmentSet k
        -> SegmentSet k
 delete = flip update False
 
+-- | /O(log(n))/. Insert a segment into the set.
+-- Alias of update.
 insert :: forall k a. (Bounded k, Ord k, Enum k, Show k)
        => Segment k
        -> SegmentSet k
        -> SegmentSet k
-insert s = update s True
+insert = flip update True
 
-(>*<) :: (Ord k, Enum k, Bounded k)
-      => FingerTree (Max k) (Item (Max k) (Segment k))
-      -> FingerTree (Max k) (Item (Max k) (Segment k))
-      -> FingerTree (Max k) (Item (Max k) (Segment k))
-(>*<) lt rt = case viewr lt of
-  EmptyR          -> rt
-  treeL :> Item _ (Segment loL hiL)  -> case viewl rt of
-    EmptyL         -> lt
-    Item _ (Segment loR hiR) :< treeR ->
-        if succ hiL >= loR
-          then treeL >< FT.singleton (Item (Max loL) (Segment loL hiR)) >< treeR
-          else lt >< rt
-
+-- | Update a segment set. Prefer `insert` or `delete` in most cases.
 update :: forall k a. (Ord k, Enum k, Bounded k, Show k)
        => Segment k
        -> Bool
        -> SegmentSet k
        -> SegmentSet k
-update (Segment lo hi) _      m | lo > hi    = m
-update (Segment lo hi) False  (SegmentSet (OrderedMap t)) =
-  SegmentSet $ OrderedMap (at >*< cccc)
+update (Segment lo hi)   _  m | lo > hi                = m
+update s@(Segment lo hi) b (SegmentSet (OrderedMap t)) =
+  SegmentSet $ OrderedMap contents
   where
+    contents = if b then at >*< bbbb >*< cccc else at >*< cccc
     (fstPivotLt, fstPivotRt) = FT.split (>= Max lo) t
     (at, atSurplus) = cappedL lo fstPivotLt
     (zs, remainder) = FT.split (> Max hi) (atSurplus >*< fstPivotRt)
     e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capM hi)
     rt = e >< remainder
     cccc = cappedM hi rt
-update s@(Segment lo hi) True   (SegmentSet (OrderedMap t)) =
-  SegmentSet $ OrderedMap (at >*< bbbb >*< cccc)
-  where
-    (fstPivotLt, fstPivotRt) = FT.split (>= Max lo) t
-    (at, atSurplus) = cappedL lo fstPivotLt
-    (zs, remainder) = FT.split (> Max hi) (atSurplus >*< fstPivotRt)
-    e = maybe FT.Empty FT.singleton (FT.maybeLast zs >>= capM hi)
-    rt = e >< remainder
     bbbb = FT.singleton (Item (Max lo) s)
-    cccc = cappedM hi rt
 
 cappedL :: (Enum k, Ord k, Bounded k, Show k)
   => k
@@ -198,3 +182,36 @@ fromList :: (Ord v, Enum v, Bounded v, Show v)
   => [Segment v]
   -> SegmentSet v
 fromList = foldl (flip insert) empty
+
+--------------------------------------------------------------------------------
+-- Private functions
+--------------------------------------------------------------------------------
+
+-- | /O(log(n))/. Merge two segment sets.
+-- Private (bare) function to merge two segment sets.
+-- Requires two guarantees from the caller:
+-- 1) That the sets are non-overlapping, and
+-- 2) That the left tree is "less" than the right tree. i.e. that the maximum
+-- high in the left tree is less than the minimum low in the right tree.
+-- If the two middle-most segments are adjacent:
+--   (max (hi left) == succ (min (low right))
+-- then those two segments will be merged.
+merge :: (Ord k, Enum k, Bounded k)
+       => FingerTree (Max k) (Item (Max k) (Segment k))
+       -> FingerTree (Max k) (Item (Max k) (Segment k))
+       -> FingerTree (Max k) (Item (Max k) (Segment k))
+merge lt rt = case viewr lt of
+  EmptyR          -> rt
+  treeL :> Item _ (Segment loL hiL)  -> case viewl rt of
+    EmptyL         -> lt
+    Item _ (Segment loR hiR) :< treeR ->
+        if succ hiL >= loR
+          then treeL >< FT.singleton (Item (Max loL) (Segment loL hiR)) >< treeR
+          else lt >< rt
+
+-- | Operator version of merge.
+(>*<) :: (Ord k, Enum k, Bounded k)
+      => FingerTree (Max k) (Item (Max k) (Segment k))
+      -> FingerTree (Max k) (Item (Max k) (Segment k))
+      -> FingerTree (Max k) (Item (Max k) (Segment k))
+(>*<) = merge
