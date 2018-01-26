@@ -54,9 +54,12 @@ spec = describe "App.NaiveIntervalSpec" $ do
     toList (remove (Segment 1 15) ips) `shouldBe` [Segment 16 20, Segment 220 300]
     toList (remove (Segment 0 15) ips) `shouldBe` [Segment 16 20, Segment 220 300]
 
-
   it "should remove rightmost" $ do
     toList (remove (Segment 220 300) ips) `shouldBe` [Segment 1 10, Segment 12 20]
     toList (remove (Segment 200 300) ips) `shouldBe` [Segment 1 10, Segment 12 20]
     toList (remove (Segment  18 300) ips) `shouldBe` [Segment 1 10, Segment 12 17]
     toList (remove (Segment  18 400) ips) `shouldBe` [Segment 1 10, Segment 12 17]
+
+  it "should merge adjacent segments" $ do
+    let segments = [Segment 1 1, Segment 2 2] :: [Segment Int]
+    toList (fromList segments) `shouldBe` [Segment 1 2]

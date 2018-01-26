@@ -6,11 +6,10 @@ module HaskellWorks.Data.Gen
 
 import Data.List
 import HaskellWorks.Data.Segment.Strict
+import Hedgehog                         (MonadGen)
 
-import Hedgehog.Gen (Gen (..))
-
-import qualified Hedgehog.Gen   as Gen
-import qualified Hedgehog.Range as Range
+import qualified Hedgehog.Gen   as G
+import qualified Hedgehog.Range as R
 
 pairs :: [a] -> [(a, a)]
 pairs (a:b:rs) = (a, b):pairs rs
@@ -21,16 +20,22 @@ unsafeNub (a:b:bs) = if a == b then a:bs else a:unsafeNub (b:bs)
 unsafeNub (a:as)   = a:as
 unsafeNub []       = []
 
-genSegments :: Monad m => Int -> Int -> Int -> Gen m [Segment Int]
-genSegments len minInt maxInt = Gen.list (Range.linear 0 len) $ genIntSegment minInt maxInt
+genSegment :: MonadGen m => m (Segment Int)
+genSegment = do
+    lt <- G.int (R.linear 0  1000)
+    rt <- G.int (R.linear lt 1000)
+    return $ Segment lt rt
 
-genIntSegment :: Monad m => Int -> Int -> Gen m (Segment Int)
+genSegments :: MonadGen m => Int -> Int -> Int -> m [Segment Int]
+genSegments len minInt maxInt = G.list (R.linear 0 len) $ genIntSegment minInt maxInt
+
+genIntSegment :: MonadGen m => Int -> Int -> m (Segment Int)
 genIntSegment minInt maxInt = do
-  a <- Gen.int (Range.linear minInt maxInt)
-  b <- Gen.int (Range.linear minInt maxInt)
+  a <- G.int (R.linear minInt maxInt)
+  b <- G.int (R.linear minInt maxInt)
   return (Segment (a `min` b) (a `max` b))
 
-genOrderedIntSegments :: Monad m => Int -> Int -> Int -> Gen m [Segment Int]
+genOrderedIntSegments :: MonadGen m => Int -> Int -> Int -> m [Segment Int]
 genOrderedIntSegments n minInt maxInt = do
-  as <- Gen.list (Range.linear 0 (n * 2)) (Gen.int (Range.linear minInt maxInt))
+  as <- G.list (R.linear 0 (n * 2)) (G.int (R.linear minInt maxInt))
   return $ unsafeNub (uncurry Segment <$> pairs (sort as))
