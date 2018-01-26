@@ -1,9 +1,9 @@
 version: 2.0
 jobs:
   build:
-    working_directory: ~/finger-tree-strict
+    working_directory: ~/hw-fingertree-strict
     docker:
-      - image: fpco/stack-build:latest
+      - image: quay.io/haskell_works/stack-build-cabal:2017-12-27
 
     steps:
       - checkout
@@ -49,7 +49,7 @@ jobs:
       ##### Building library
       - restore_cache:
           keys:
-            - dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "finger-tree-strict.cabal" }}
+            - dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-fingertree-strict.cabal" }}
             - dot-stack-{{ checksum "stack.yaml" }}-build
             - dot-stack-{{ checksum "stack.yaml" }}-setup
 
@@ -74,7 +74,7 @@ jobs:
           command: stack --stack-yaml stack-ci.yaml build --test --no-run-tests
 
       - save_cache:
-          key: dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "finger-tree-strict.cabal" }}
+          key: dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "hw-fingertree-strict.cabal" }}
           paths:
             - ~/.stack
       - save_cache:
@@ -84,7 +84,7 @@ jobs:
 
       - save_cache:
           key: dot-stack-work-{{ checksum "stack.yaml" }}
-          paths: ~/finger-tree-strict/.stack-work
+          paths: ~/hw-fingertree-strict/.stack-work
 
       ##### Running tests
       - run:
