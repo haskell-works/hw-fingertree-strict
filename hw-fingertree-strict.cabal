@@ -39,6 +39,8 @@ library
                       , HaskellWorks.Data.Segment.Strict
   build-depends:        base >= 4.7 && < 5
   default-language:     Haskell2010
+  if !impl(ghc >= 8.0)
+    build-depends: semigroups == 0.18.*
 
 test-suite hw-fingertree-strict-test
   type: exitcode-stdio-1.0

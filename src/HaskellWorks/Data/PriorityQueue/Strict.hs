@@ -54,13 +54,14 @@ module HaskellWorks.Data.PriorityQueue.Strict (
     minViewWithKey
     ) where
 
-import           HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
-import qualified HaskellWorks.Data.FingerTree.Strict as FT
-
-import Control.Arrow ((***))
-import Data.Foldable (Foldable (foldMap))
+import Control.Arrow                       ((***))
+import Data.Foldable                       (Foldable (foldMap))
 import Data.Monoid
-import Prelude       hiding (null)
+import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
+import Prelude                             hiding (null)
+
+import qualified Data.Semigroup                      as S
+import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
 data Entry k v = Entry k v
 
@@ -72,13 +73,17 @@ instance Foldable (Entry k) where
 
 data Prio k v = NoPrio | Prio k v
 
+instance Ord k => S.Semigroup (Prio k v) where
+  x             <> NoPrio         = x
+  NoPrio        <> y              = y
+  x@(Prio kx _) <> y@(Prio ky _)  = if kx <= ky then x else y
+  {-# INLINE (<>) #-}
+
 instance Ord k => Monoid (Prio k v) where
-    mempty                  = NoPrio
-    x `mappend` NoPrio      = x
-    NoPrio `mappend` y      = y
-    x@(Prio kx _) `mappend` y@(Prio ky _)
-      | kx <= ky            = x
-      | otherwise           = y
+    mempty  = NoPrio
+    {-# INLINE mempty #-}
+    mappend = (<>)
+    {-# INLINE mappend #-}
 
 instance Ord k => Measured (Prio k v) (Entry k v) where
     measure (Entry k v) = Prio k v
@@ -94,9 +99,15 @@ instance Ord k => Foldable (PQueue k) where
         Nothing      -> mempty
         Just (v, q') -> f v `mappend` foldMap f q'
 
+instance Ord k => S.Semigroup (PQueue k v) where
+  (<>) = union
+  {-# INLINE (<>) #-}
+
 instance Ord k => Monoid (PQueue k v) where
-    mempty = empty
-    mappend = union
+  mempty = empty
+  {-# INLINE mempty #-}
+  mappend = (<>)
+  {-# INLINE mappend #-}
 
 -- | /O(1)/. The empty priority queue.
 empty :: Ord k => PQueue k v
