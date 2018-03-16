@@ -68,6 +68,8 @@ import Control.Applicative (Applicative (pure, (<*>)), (<$>))
 import Data.Foldable       (Foldable (foldMap), foldr', toList)
 import Data.Monoid
 
+import qualified Data.Semigroup as S
+
 infixr 5 ><
 infixr 5 <|, :<
 infixl 5 |>, :>
@@ -93,10 +95,16 @@ instance Functor s => Functor (ViewR s) where
     fmap _ EmptyR    = EmptyR
     fmap f (xs :> x) = fmap f xs :> f x
 
+instance Measured v a => S.Semigroup (FingerTree v a) where
+  (<>) = (><)
+  {-# INLINE (<>) #-}
+
 -- | 'empty' and '><'.
 instance Measured v a => Monoid (FingerTree v a) where
-    mempty = empty
-    mappend = (><)
+  mempty = empty
+  {-# INLINE mempty #-}
+  mappend = (<>)
+  {-# INLINE mappend #-}
 
 -- Explicit Digit type (Exercise 1)
 
