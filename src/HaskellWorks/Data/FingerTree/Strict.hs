@@ -103,8 +103,9 @@ instance Measured v a => S.Semigroup (FingerTree v a) where
 instance Measured v a => Monoid (FingerTree v a) where
   mempty = empty
   {-# INLINE mempty #-}
-  mappend = (<>)
+  mappend = (><)
   {-# INLINE mappend #-}
+
 
 -- Explicit Digit type (Exercise 1)
 

@@ -80,16 +80,20 @@ instance Traversable (Node v) where
 -- rightmost interval (including largest lower bound) and largest upper bound.
 data IntInterval v = NoInterval | IntInterval !(Interval v) !v
 
+appendInterval :: Ord v => IntInterval v -> IntInterval v -> IntInterval v
+appendInterval (NoInterval       ) (i                   ) = i
+appendInterval (i                ) (NoInterval          ) = i
+appendInterval (IntInterval _ hi1) (IntInterval int2 hi2) = IntInterval int2 (max hi1 hi2)
+{-# INLINE appendInterval #-}
+
 instance Ord v => S.Semigroup (IntInterval v) where
-  NoInterval        <> i                    = i
-  i                 <> NoInterval           = i
-  IntInterval _ hi1 <> IntInterval int2 hi2 = IntInterval int2 (max hi1 hi2)
+  (<>) = appendInterval
   {-# INLINE (<>) #-}
 
 instance Ord v => Monoid (IntInterval v) where
   mempty = NoInterval
   {-# INLINE mempty #-}
-  mappend = (<>)
+  mappend = appendInterval
   {-# INLINE mappend #-}
 
 instance (Ord v) => Measured (IntInterval v) (Node v a) where
