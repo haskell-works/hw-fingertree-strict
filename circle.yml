@@ -73,6 +73,15 @@ jobs:
           name: Compiling
           command: stack --stack-yaml stack-ci.yaml build --test --no-run-tests
 
+      - run:
+          name: Generating documentation
+          command: |
+            if [ "$CIRCLE_PROJECT_USERNAME" == "haskell-works" ]; then
+              if [[ "$CIRCLE_TAG" =~ v.* ]]; then
+                stack --stack-yaml stack-ci.yaml haddock
+              fi
+            fi
+
       - save_cache:
           key: dot-stack-{{ checksum "stack.yaml" }}-{{ checksum "package.yaml" }}
           paths:
