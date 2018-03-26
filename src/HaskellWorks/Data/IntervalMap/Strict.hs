@@ -45,9 +45,11 @@ module HaskellWorks.Data.IntervalMap.Strict (
     ) where
 
 import Control.Applicative                 ((<$>))
+import Control.DeepSeq                     (NFData)
 import Data.Foldable                       (Foldable (foldMap))
 import Data.Monoid
 import Data.Traversable                    (Traversable (traverse))
+import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><))
 
 import qualified Data.Semigroup                      as S
@@ -60,13 +62,14 @@ import qualified HaskellWorks.Data.FingerTree.Strict as FT
 -- | A closed interval.  The lower bound should be less than or equal
 -- to the higher bound.
 data Interval v = Interval { low :: !v, high :: !v }
-    deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Generic, NFData)
 
 -- | An interval in which the lower and upper bounds are equal.
 point :: v -> Interval v
 point v = Interval v v
 
 data Node v a = Node !(Interval v) !a
+  deriving (Eq, Show, Generic, NFData)
 
 instance Functor (Node v) where
     fmap f (Node i x) = Node i (f x)
@@ -79,6 +82,7 @@ instance Traversable (Node v) where
 
 -- rightmost interval (including largest lower bound) and largest upper bound.
 data IntInterval v = NoInterval | IntInterval !(Interval v) !v
+  deriving (Eq, Show, Generic, NFData)
 
 appendInterval :: Ord v => IntInterval v -> IntInterval v -> IntInterval v
 appendInterval (NoInterval       ) (i                   ) = i
@@ -104,6 +108,8 @@ instance (Ord v) => Measured (IntInterval v) (Node v a) where
 -- lexicographical order.
 newtype IntervalMap v a =
     IntervalMap (FingerTree (IntInterval v) (Node v a))
+  deriving (Eq, Show, Generic, NFData)
+
 -- ordered lexicographically by interval
 
 instance Functor (IntervalMap v) where

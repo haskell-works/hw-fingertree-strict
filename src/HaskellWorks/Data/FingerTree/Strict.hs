@@ -65,8 +65,10 @@ module HaskellWorks.Data.FingerTree.Strict (
 import Prelude hiding (null, reverse)
 
 import Control.Applicative (Applicative (pure, (<*>)), (<$>))
+import Control.DeepSeq     (NFData)
 import Data.Foldable       (Foldable (foldMap), foldr', toList)
 import Data.Monoid
+import GHC.Generics        (Generic)
 
 import qualified Data.Semigroup as S
 
@@ -78,14 +80,14 @@ infixl 5 |>, :>
 data ViewL s a
     = EmptyL        -- ^ empty sequence
     | !a :< !(s a)  -- ^ leftmost element and the rest of the sequence
-    deriving (Eq, Ord, Show, Read)
+    deriving (Eq, Ord, Show, Read, Generic, NFData)
 
 -- | View of the right end of a sequence.
 data ViewR s a
     = EmptyR        -- ^ empty sequence
     | !(s a) :> !a      -- ^ the sequence minus the rightmost element,
                     -- and the rightmost element
-    deriving (Eq, Ord, Show, Read)
+    deriving (Eq, Ord, Show, Read, Generic, NFData)
 
 instance Functor s => Functor (ViewL s) where
     fmap _ EmptyL    = EmptyL
@@ -114,7 +116,7 @@ data Digit a
     | Two !a !a
     | Three !a !a !a
     | Four !a !a !a !a
-    deriving Show
+    deriving (Eq, Show, Generic, NFData)
 
 instance Foldable Digit where
     foldMap f (One a)        = f a
@@ -138,7 +140,7 @@ instance (Measured v a) => Measured v (Digit a) where
 ---------------------------
 
 data Node v a = Node2 !v !a !a | Node3 !v !a !a !a
-    deriving Show
+    deriving (Show, Generic, NFData)
 
 instance Foldable (Node v) where
     foldMap f (Node2 _ a b)   = f a `mappend` f b
@@ -173,7 +175,7 @@ data FingerTree v a
     = Empty
     | Single !a
     | Deep !v !(Digit a) !(FingerTree v (Node v a)) !(Digit a)
-    deriving (Show)
+    deriving (Show, Generic, NFData)
 
 deep ::  (Measured v a) =>
      Digit a -> FingerTree v (Node v a) -> Digit a -> FingerTree v a
@@ -737,7 +739,7 @@ takeUntil p  =  fst . split p
 dropUntil :: (Measured v a) => (v -> Bool) -> FingerTree v a -> FingerTree v a
 dropUntil p  =  snd . split p
 
-data Split t a = Split !t !a !t
+data Split t a = Split !t !a !t deriving (Eq, Show, Generic, NFData)
 
 splitTree :: (Measured v a) =>
     (v -> Bool) -> v -> FingerTree v a -> Split (FingerTree v a) a

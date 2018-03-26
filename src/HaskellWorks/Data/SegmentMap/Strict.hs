@@ -1,6 +1,7 @@
 -- {-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -56,16 +57,17 @@ module HaskellWorks.Data.SegmentMap.Strict
     cappedM
     ) where
 
+import Control.Applicative                 ((<$>))
+import Control.DeepSeq                     (NFData)
+import Data.Foldable                       (Foldable (foldMap), foldl', toList)
+import Data.Semigroup
+import Data.Traversable                    (Traversable (traverse))
+import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, ViewL (..), ViewR (..), viewl, viewr, (<|), (><))
 import HaskellWorks.Data.Item.Strict
 import HaskellWorks.Data.Segment.Strict
 
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
-
-import Control.Applicative ((<$>))
-import Data.Foldable       (Foldable (foldMap), foldl', toList)
-import Data.Semigroup
-import Data.Traversable    (Traversable (traverse))
 
 infixr 5 >*<
 
@@ -77,9 +79,9 @@ infixr 5 >*<
 -- The 'Foldable' and 'Traversable' instances process the segments in
 -- lexicographical order.
 
-newtype OrderedMap k a = OrderedMap (FingerTree k (Item k a)) deriving Show
+newtype OrderedMap k a = OrderedMap (FingerTree k (Item k a)) deriving (Show, Generic, NFData)
 
-newtype SegmentMap k a = SegmentMap (OrderedMap (Max k) (Segment k, a)) deriving Show
+newtype SegmentMap k a = SegmentMap (OrderedMap (Max k) (Segment k, a)) deriving (Show, Generic, NFData)
 
 -- ordered lexicographically by segment start
 

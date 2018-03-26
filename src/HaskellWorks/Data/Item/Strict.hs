@@ -1,11 +1,15 @@
+{-# LANGUAGE DeriveAnyClass        #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module HaskellWorks.Data.Item.Strict where
 
+import Control.DeepSeq                     (NFData)
+import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict
 
-data Item k a = Item !k !a deriving (Eq, Show)
+data Item k a = Item !k !a deriving (Eq, Show, Generic, NFData)
 
 instance Functor (Item k) where
     fmap f (Item i t) = Item i (f t)

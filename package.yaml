@@ -34,6 +34,7 @@ license: BSD3
 github: haskell-works/hw-fingertree-strict
 extra-source-files:
 - README.md
+
 library:
   source-dirs: src
   exposed-modules:
@@ -46,10 +47,12 @@ library:
   - HaskellWorks.Data.Segment.Strict
   dependencies:
   - base >=4.7 && <5
+  - deepseq
   when:
   - condition: ! '!(impl(ghc >=8.0))'
     dependencies:
     - semigroups ==0.18.*
+
 tests:
   hw-fingertree-strict-test:
     main: Spec.hs

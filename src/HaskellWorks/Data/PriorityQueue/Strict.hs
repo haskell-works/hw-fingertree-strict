@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP                   #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 #if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe                  #-}
@@ -55,8 +56,10 @@ module HaskellWorks.Data.PriorityQueue.Strict (
     ) where
 
 import Control.Arrow                       ((***))
+import Control.DeepSeq                     (NFData)
 import Data.Foldable                       (Foldable (foldMap))
 import Data.Monoid
+import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
 import Prelude                             hiding (null)
 
