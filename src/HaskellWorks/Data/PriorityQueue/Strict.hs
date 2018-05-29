@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP                   #-}
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 #if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe                  #-}
@@ -40,19 +39,21 @@
 --
 -----------------------------------------------------------------------------
 
-module HaskellWorks.Data.PriorityQueue.Strict (
-    PQueue,
+module HaskellWorks.Data.PriorityQueue.Strict
+    ( PQueue
     -- * Construction
-    empty,
-    singleton,
-    union,
-    insert,
-    add,
-    fromList,
+    , empty
+    , singleton
+    , union
+    , insert
+    , add
+    , fromList
     -- * Deconstruction
-    null,
-    minView,
-    minViewWithKey
+    , null
+    , minView
+    , minViewWithKey
+    , takeWithKeys
+    , take
     ) where
 
 import Control.Arrow                       ((***))
@@ -61,7 +62,7 @@ import Data.Foldable                       (Foldable (foldMap))
 import Data.Monoid
 import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
-import Prelude                             hiding (null)
+import Prelude                             hiding (null, take)
 
 import qualified Data.Semigroup                      as S
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
@@ -169,6 +170,24 @@ null (PQueue q) = FT.null q
 --
 minView :: Ord k => PQueue k v -> Maybe (v, PQueue k v)
 minView q = fmap (snd *** id) (minViewWithKey q)
+
+-- | /O(n)/ for number of elements taken.
+takeWithKeys :: Ord k => Int -> PQueue k v -> ([(k, v)], PQueue k v)
+takeWithKeys = go []
+  where go :: Ord k => [(k, v)] -> Int -> PQueue k v -> ([(k, v)], PQueue k v)
+        go as n q | n > 0 = case minViewWithKey q of
+          Just (a, r) -> go (a:as) (n - 1) r
+          _           -> (reverse as, q)
+        go as _ q = (reverse as, q)
+
+-- | /O(n)/ for number of elements taken.
+take :: Ord k => Int -> PQueue k v -> ([v], PQueue k v)
+take = go []
+  where go :: Ord k => [v] -> Int -> PQueue k v -> ([v], PQueue k v)
+        go as n q | n > 0 = case minView q of
+          Just (a, r) -> go (a:as) (n - 1) r
+          _           -> (reverse as, q)
+        go as _ q = (reverse as, q)
 
 -- | /O(1)/ for the element, /O(log(n))/ for the reduced queue.
 -- Returns 'Nothing' for an empty map, or the minimal (priority, value)
