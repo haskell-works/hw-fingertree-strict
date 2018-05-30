@@ -48,6 +48,8 @@ library:
   dependencies:
   - base >=4.7 && <5
   - deepseq
+  other-extensions:
+  - DeriveAnyClass
   when:
   - condition: ! '!(impl(ghc >=8.0))'
     dependencies:
