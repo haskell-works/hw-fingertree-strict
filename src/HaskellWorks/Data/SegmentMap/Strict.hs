@@ -108,11 +108,11 @@ segmentMapToList (SegmentMap m) = toList m
 --         SegmentMap <$> FT.unsafeTraverse (traverse f) t
 
 -- | /O(1)/.  The empty segment map.
-empty :: (Ord k, Bounded k) => SegmentMap k a
+empty :: SegmentMap k a
 empty = SegmentMap (OrderedMap FT.empty)
 
 -- | /O(1)/.  Segment map with a single entry.
-singleton :: (Bounded k, Ord k) => Segment k -> a -> SegmentMap k a
+singleton :: Segment k -> a -> SegmentMap k a
 singleton s@(Segment lo hi) a = SegmentMap $ OrderedMap $ FT.singleton $ Item (Max lo) (s, a)
 
 delete :: forall k a. (Bounded k, Ord k, Enum k, Eq a, Show k, Show a)

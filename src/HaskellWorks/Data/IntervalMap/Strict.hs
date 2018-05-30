@@ -134,11 +134,11 @@ instance (Ord v) => Monoid (IntervalMap v a) where
     {-# INLINE mappend #-}
 
 -- | /O(1)/.  The empty interval map.
-empty :: (Ord v) => IntervalMap v a
+empty :: IntervalMap v a
 empty = IntervalMap FT.empty
 
 -- | /O(1)/.  Interval map with a single entry.
-singleton :: (Ord v) => Interval v -> a -> IntervalMap v a
+singleton :: Interval v -> a -> IntervalMap v a
 singleton i x = IntervalMap (FT.singleton (Node i x))
 
 -- | /O(log n)/.  Insert an interval into a map.
