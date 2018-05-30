@@ -118,7 +118,7 @@ instance Ord k => Monoid (PQueue k v) where
   {-# INLINE mappend #-}
 
 -- | /O(1)/. The empty priority queue.
-empty :: Ord k => PQueue k v
+empty :: PQueue k v
 empty = PQueue FT.empty
 
 -- | /O(1)/. A singleton priority queue.
@@ -157,7 +157,7 @@ fromList :: Ord k => [(k, v)] -> PQueue k v
 fromList = foldr (uncurry insert) empty
 
 -- | /O(1)/. Is this the empty priority queue?
-null :: Ord k => PQueue k v -> Bool
+null :: PQueue k v -> Bool
 null (PQueue q) = FT.null q
 
 -- | /O(1)/ for the element, /O(log(n))/ for the reduced queue.

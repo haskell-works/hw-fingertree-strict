@@ -110,11 +110,11 @@ segmentSetToList (SegmentSet m) = toList m
 --         SegmentSet <$> FT.unsafeTraverse (traverse f) t
 
 -- | /O(1)/.  The empty segment set.
-empty :: (Ord k, Bounded k) => SegmentSet k
+empty :: SegmentSet k
 empty = SegmentSet (OrderedMap FT.empty)
 
 -- | /O(1)/.  Segment set with a single entry.
-singleton :: (Bounded k, Ord k) => Segment k -> SegmentSet k
+singleton :: Segment k -> SegmentSet k
 singleton s@(Segment lo hi) = SegmentSet $ OrderedMap $ FT.singleton $ Item (Max lo) s
 
 -- | /O(log(n))/. Remove a segment from the set.
