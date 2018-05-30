@@ -1,5 +1,5 @@
 name: hw-fingertree-strict
-version: '0.1.1.0'
+version: '0.1.1.1'
 synopsis: Generic strict finger-tree structure
 description: ! 'A general sequence representation with arbitrary
 
