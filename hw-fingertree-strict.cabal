@@ -21,8 +21,8 @@ homepage:       https://github.com/haskell-works/hw-fingertree-strict#readme
 bug-reports:    https://github.com/haskell-works/hw-fingertree-strict/issues
 author:         John Ky
 maintainer:     newhoggy@gmail.com
-copyright:      2017 John Ky; 2006 Ross Paterson,
-                Ralf Hinze
+copyright:      2017-2019 John Ky;
+                2006 Ross Paterson, Ralf Hinze
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
