@@ -55,10 +55,10 @@ common config
 library
   import:   base, config
           , deepseq
-  hs-source-dirs:     src
-  other-extensions:   DeriveAnyClass
-  other-modules:      Paths_hw_fingertree_strict
-  autogen-modules:    Paths_hw_fingertree_strict
+  hs-source-dirs:       src
+  other-extensions:     DeriveAnyClass
+  other-modules:        Paths_hw_fingertree_strict
+  autogen-modules:      Paths_hw_fingertree_strict
   exposed-modules:
     HaskellWorks.Data.FingerTree.Strict
     HaskellWorks.Data.IntervalMap.Strict
@@ -79,13 +79,13 @@ test-suite hw-fingertree-strict-test
           , test-framework
           , test-framework-hunit
           , test-framework-quickcheck2
-  type:               exitcode-stdio-1.0
-  main-is:            Spec.hs
-  hs-source-dirs:     test
-  ghc-options:        -threaded -rtsopts -with-rtsopts=-N
-  cpp-options:        -DTESTING
-  build-tools:        hspec-discover
-  autogen-modules:    Paths_hw_fingertree_strict
+  type:                 exitcode-stdio-1.0
+  main-is:              Spec.hs
+  hs-source-dirs:       test
+  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+  cpp-options:          -DTESTING
+  build-tool-depends:   hspec-discover:hspec-discover
+  autogen-modules:      Paths_hw_fingertree_strict
   other-modules:
     HaskellWorks.Data.FingerTree.Gen
     HaskellWorks.Data.FingerTree.Strict.Gen
