@@ -35,13 +35,13 @@ source-repository head
 
 common base                       { build-depends: base                       >= 4.7        && < 5      }
 
-common HUnit                      { build-depends: HUnit                                                }
-common QuickCheck                 { build-depends: QuickCheck                                           }
 common deepseq                    { build-depends: deepseq                                              }
 common hedgehog                   { build-depends: hedgehog                                             }
 common hspec                      { build-depends: hspec                                                }
+common HUnit                      { build-depends: HUnit                                                }
 common hw-fingertree-strict       { build-depends: hw-fingertree-strict                                 }
 common hw-hspec-hedgehog          { build-depends: hw-hspec-hedgehog                                    }
+common QuickCheck                 { build-depends: QuickCheck                   >= 2.10     && < 2.14   }
 common test-framework             { build-depends: test-framework                                       }
 common test-framework-hunit       { build-depends: test-framework-hunit                                 }
 common test-framework-quickcheck2 { build-depends: test-framework-quickcheck2                           }
