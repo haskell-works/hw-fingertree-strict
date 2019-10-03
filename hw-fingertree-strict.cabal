@@ -1,7 +1,7 @@
 cabal-version:  2.2
 
 name:           hw-fingertree-strict
-version:        0.1.1.1
+version:        0.1.1.2
 synopsis:       Generic strict finger-tree structure
 description:    A general sequence representation with arbitrary
                 annotations, for use as a base for implementations of
