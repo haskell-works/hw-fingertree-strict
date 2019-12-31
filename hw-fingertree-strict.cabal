@@ -87,7 +87,6 @@ test-suite hw-fingertree-strict-test
   ghc-options:          -threaded -rtsopts -with-rtsopts=-N
   cpp-options:          -DTESTING
   build-tool-depends:   hspec-discover:hspec-discover
-  autogen-modules:      Paths_hw_fingertree_strict
   other-modules:        HaskellWorks.Data.FingerTree.Gen
                         HaskellWorks.Data.FingerTree.Strict.Gen
                         HaskellWorks.Data.FingerTree.StrictSpec
@@ -97,7 +96,6 @@ test-suite hw-fingertree-strict-test
                         HaskellWorks.Data.SegmentSet.Naive
                         HaskellWorks.Data.SegmentSet.NaiveSpec
                         HaskellWorks.Data.SegmentSet.StrictSpec
-                        Paths_hw_fingertree_strict
 
 test-suite doctest
   import:               base, config
