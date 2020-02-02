@@ -37,7 +37,8 @@ common base                       { build-depends: base                       >=
 
 common deepseq                    { build-depends: deepseq                    >= 1.4        && < 1.5    }
 common doctest                    { build-depends: doctest                    >= 0.16.2     && < 0.17   }
-common doctest-discover           { build-depends: doctest-discover           >= 0.2        && < 0.3    }common hedgehog                   { build-depends: hedgehog                   >= 0.6        && < 1.1    }
+common doctest-discover           { build-depends: doctest-discover           >= 0.2        && < 0.3    }
+common hedgehog                   { build-depends: hedgehog                   >= 0.6        && < 1.1    }
 common hspec                      { build-depends: hspec                      >= 2.4        && < 2.8    }
 common HUnit                      { build-depends: HUnit                      >= 1.5        && < 1.7    }
 common hw-hspec-hedgehog          { build-depends: hw-hspec-hedgehog          >= 0.1        && < 0.2    }
