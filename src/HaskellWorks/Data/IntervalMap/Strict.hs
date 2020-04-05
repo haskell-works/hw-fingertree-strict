@@ -47,7 +47,6 @@ module HaskellWorks.Data.IntervalMap.Strict (
 import Control.Applicative                 ((<$>))
 import Control.DeepSeq                     (NFData)
 import Data.Foldable                       (Foldable (foldMap))
-import Data.Monoid
 import Data.Traversable                    (Traversable (traverse))
 import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><))

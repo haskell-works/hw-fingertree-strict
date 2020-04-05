@@ -67,7 +67,6 @@ import Prelude hiding (null, reverse)
 import Control.Applicative (Applicative (pure, (<*>)), (<$>))
 import Control.DeepSeq     (NFData)
 import Data.Foldable       (Foldable (foldMap), foldr', toList)
-import Data.Monoid
 import GHC.Generics        (Generic)
 
 import qualified Data.Semigroup as S
