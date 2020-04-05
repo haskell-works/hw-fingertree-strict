@@ -59,7 +59,6 @@ module HaskellWorks.Data.PriorityQueue.Strict
 import Control.Arrow                       ((***))
 import Control.DeepSeq                     (NFData)
 import Data.Foldable                       (Foldable (foldMap))
-import Data.Monoid
 import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
 import Prelude                             hiding (null, take)
