@@ -5,7 +5,7 @@ import HaskellWorks.Data.SegmentSet.Naive
 
 import Test.Hspec
 
-{-# ANN module ("HLint: ignore Redundant do"  :: String) #-}
+{- HLINT ignore "Redundant do"        -}
 
 rawIps :: [Segment Int]
 rawIps = [Segment 12 20, Segment 1 10, Segment 220 300]

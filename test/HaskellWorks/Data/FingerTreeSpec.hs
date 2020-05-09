@@ -21,9 +21,9 @@ import qualified Hedgehog.Gen                     as G
 import qualified Hedgehog.Range                   as R
 import qualified Prelude                          as P
 
-{-# ANN module ("HLint: ignore Redundant do"        :: String) #-}
-{-# ANN module ("HLint: ignore Reduce duplication"  :: String) #-}
-{-# ANN module ("HLint: ignore Redundant bracket"   :: String) #-}
+{- HLINT ignore "Redundant do"        -}
+{- HLINT ignore "Reduce duplication"  -}
+{- HLINT ignore "Redundant bracket"   -}
 
 spec :: Spec
 spec = do
