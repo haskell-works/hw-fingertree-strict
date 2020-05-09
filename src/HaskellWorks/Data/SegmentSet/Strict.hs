@@ -72,7 +72,7 @@ import HaskellWorks.Data.Segment.Strict
 
 import qualified HaskellWorks.Data.FingerTree.Strict as FT
 
-{-# ANN module ("HLint: ignore Reduce duplication"  :: String) #-}
+{- HLINT ignore "Reduce duplication"  -}
 
 infixr 5 >*<
 

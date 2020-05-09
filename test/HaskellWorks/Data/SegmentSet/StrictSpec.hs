@@ -6,7 +6,7 @@ module HaskellWorks.Data.SegmentSet.StrictSpec
   ) where
 
 import Data.Foldable
-import Data.List (sortBy)
+import Data.List     (sortBy)
 
 import Control.Monad.IO.Class
 import Data.Semigroup
@@ -24,7 +24,7 @@ import HaskellWorks.Hspec.Hedgehog
 import Hedgehog
 import Test.Hspec
 
-{-# ANN module ("HLint: ignore Redundant do"  :: String) #-}
+{- HLINT ignore "Redundant do"        -}
 
 fallbackTo :: Bool
 fallbackTo = True
