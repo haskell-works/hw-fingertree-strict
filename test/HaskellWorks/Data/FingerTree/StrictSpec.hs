@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TupleSections         #-}
 
 module HaskellWorks.Data.FingerTree.StrictSpec (spec) where
 
@@ -137,7 +138,7 @@ evalM :: M a -> a
 evalM m = snd (runM m 0)
 
 instance Monad M where
-    return x = M $ \ n -> (n, x)
+    return x = M (, x)
     M u >>= f = M $ \ m -> let (n, x) = u m in runM (f x) n
 
 instance Functor M where

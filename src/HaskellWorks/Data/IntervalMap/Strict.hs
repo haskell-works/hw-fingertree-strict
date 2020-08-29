@@ -84,8 +84,8 @@ data IntInterval v = NoInterval | IntInterval !(Interval v) !v
   deriving (Eq, Show, Generic, NFData)
 
 appendInterval :: Ord v => IntInterval v -> IntInterval v -> IntInterval v
-appendInterval (NoInterval       ) (i                   ) = i
-appendInterval (i                ) (NoInterval          ) = i
+appendInterval  NoInterval          i                     = i
+appendInterval  i                   NoInterval            = i
 appendInterval (IntInterval _ hi1) (IntInterval int2 hi2) = IntInterval int2 (max hi1 hi2)
 {-# INLINE appendInterval #-}
 
