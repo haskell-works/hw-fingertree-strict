@@ -3,7 +3,6 @@
 {-# LANGUAGE DeriveGeneric          #-}
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE UndecidableInstances   #-}
 #if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe                   #-}
@@ -74,6 +73,9 @@ import qualified Data.Semigroup as S
 infixr 5 ><
 infixr 5 <|, :<
 infixl 5 |>, :>
+
+{- HLINT ignore "Reduce duplication"  -}
+{- HLINT ignore "Use record patterns" -}
 
 -- | View of the left end of a sequence.
 data ViewL s a
@@ -389,7 +391,7 @@ consDigit :: a -> Digit a -> Digit a
 consDigit a (One b)        = Two a b
 consDigit a (Two b c)      = Three a b c
 consDigit a (Three b c d)  = Four a b c d
-consDigit _ (Four _ _ _ _) = illegal_argument "consDigit"
+consDigit _ (Four _ _ _ _) = illegalArgument "consDigit"
 
 -- | /O(1)/. Add an element to the right end of a sequence.
 -- Mnemonic: a triangle with the single element at the pointy end.
@@ -405,7 +407,7 @@ snocDigit :: Digit a -> a -> Digit a
 snocDigit (One a) b        = Two a b
 snocDigit (Two a b) c      = Three a b c
 snocDigit (Three a b c) d  = Four a b c d
-snocDigit (Four _ _ _ _) _ = illegal_argument "snocDigit"
+snocDigit (Four _ _ _ _) _ = illegalArgument "snocDigit"
 
 -- | /O(1)/. Is this the empty sequence?
 null :: FingerTree v a -> Bool
@@ -431,7 +433,7 @@ lheadDigit (Three a _ _)  = a
 lheadDigit (Four a _ _ _) = a
 
 ltailDigit :: Digit a -> Digit a
-ltailDigit (One _)        = illegal_argument "ltailDigit"
+ltailDigit (One _)        = illegalArgument "ltailDigit"
 ltailDigit (Two _ b)      = One b
 ltailDigit (Three _ b c)  = Two b c
 ltailDigit (Four _ b c d) = Three b c d
@@ -455,7 +457,7 @@ rheadDigit (Three _ _ c)  = c
 rheadDigit (Four _ _ _ d) = d
 
 rtailDigit :: Digit a -> Digit a
-rtailDigit (One _)        = illegal_argument "rtailDigit"
+rtailDigit (One _)        = illegalArgument "rtailDigit"
 rtailDigit (Two a _)      = One a
 rtailDigit (Three a b _)  = Two a b
 rtailDigit (Four a b c _) = Three a b c
@@ -742,7 +744,7 @@ data Split t a = Split !t !a !t deriving (Eq, Show, Generic, NFData)
 
 splitTree :: Measured v a =>
     (v -> Bool) -> v -> FingerTree v a -> Split (FingerTree v a) a
-splitTree _ _ Empty = illegal_argument "splitTree"
+splitTree _ _ Empty = illegalArgument "splitTree"
 splitTree _ _ (Single x) = Split Empty x Empty
 splitTree p i (Deep _ pr m sf)
   | p vpr       =  let  Split l x r     =  splitDigit p i pr
@@ -835,9 +837,8 @@ reverseDigit f (Two a b)      = Two (f b) (f a)
 reverseDigit f (Three a b c)  = Three (f c) (f b) (f a)
 reverseDigit f (Four a b c d) = Four (f d) (f c) (f b) (f a)
 
-illegal_argument :: String -> a
-illegal_argument name =
-    error $ "Logic error: " ++ name ++ " called with illegal argument"
+illegalArgument :: String -> a
+illegalArgument name = error $ "Logic error: " <> name <> " called with illegal argument"
 
 maybeHead :: Measured v a => FingerTree v a -> Maybe a
 maybeHead zs = case viewl zs of

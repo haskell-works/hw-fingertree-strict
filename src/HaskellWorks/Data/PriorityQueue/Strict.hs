@@ -58,6 +58,7 @@ module HaskellWorks.Data.PriorityQueue.Strict
 
 import Control.Arrow                       ((***))
 import Control.DeepSeq                     (NFData)
+import Data.Bifunctor                      (first)
 import Data.Foldable                       (Foldable (foldMap))
 import GHC.Generics                        (Generic)
 import HaskellWorks.Data.FingerTree.Strict (FingerTree, Measured (..), ViewL (..), (<|), (><), (|>))
@@ -168,7 +169,7 @@ null (PQueue q) = FT.null q
 --  * @'minView' ('singleton' k v) = 'Just' (v, 'empty')@
 --
 minView :: Ord k => PQueue k v -> Maybe (v, PQueue k v)
-minView q = fmap (snd *** id) (minViewWithKey q)
+minView q = fmap (first snd) (minViewWithKey q)
 
 -- | /O(n)/ for number of elements taken.
 takeWithKeys :: Ord k => Int -> PQueue k v -> ([(k, v)], PQueue k v)
