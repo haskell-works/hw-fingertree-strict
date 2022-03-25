@@ -1,11 +1,6 @@
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-#if __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe                  #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 710
-{-# LANGUAGE AutoDeriveTypeable    #-}
-#endif
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.PriorityQueue.FingerTree
@@ -90,8 +85,6 @@ instance Ord k => S.Semigroup (Prio k v) where
 instance Ord k => Monoid (Prio k v) where
     mempty  = NoPrio
     {-# INLINE mempty #-}
-    mappend = appendPrio
-    {-# INLINE mappend #-}
 
 instance Ord k => Measured (Prio k v) (Entry k v) where
     measure (Entry k v) = Prio k v

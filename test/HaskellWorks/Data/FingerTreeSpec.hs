@@ -138,14 +138,13 @@ evalM :: M a -> a
 evalM m = snd (runM m 0)
 
 instance Monad M where
-    return x = M (, x)
     M u >>= f = M $ \ m -> let (n, x) = u m in runM (f x) n
 
 instance Functor M where
     fmap f (M u) = M $ \ m -> let (n, x) = u m in (n, f x)
 
 instance Applicative M where
-    pure = return
+    pure x = M (, x)
     (<*>) = ap
 
 step :: M Int

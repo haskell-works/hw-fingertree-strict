@@ -2,12 +2,7 @@
 {-# LANGUAGE DeriveAnyClass        #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-#if __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe                  #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 710
-{-# LANGUAGE AutoDeriveTypeable    #-}
-#endif
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.IntervalMap.Strict
@@ -96,8 +91,6 @@ instance Ord v => S.Semigroup (IntInterval v) where
 instance Ord v => Monoid (IntInterval v) where
   mempty = NoInterval
   {-# INLINE mempty #-}
-  mappend = appendInterval
-  {-# INLINE mappend #-}
 
 instance (Ord v) => Measured (IntInterval v) (Node v a) where
     measure (Node i _) = IntInterval i (high i)
