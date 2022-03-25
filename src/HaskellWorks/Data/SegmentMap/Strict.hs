@@ -5,12 +5,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-#if __GLASGOW_HASKELL__ >= 702
--- {-# LANGUAGE Safe                  #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 710
-{-# LANGUAGE AutoDeriveTypeable    #-}
-#endif
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.SegmentMap.Strict

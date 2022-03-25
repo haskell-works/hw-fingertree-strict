@@ -1,2 +1,2 @@
 # hw-fingertree-strict
-[![CircleCI](https://circleci.com/gh/haskell-works/hw-fingertree-strict.svg?style=svg)](https://circleci.com/gh/haskell-works/hw-fingertree-strict)
+[![Binaries](https://github.com/haskell-works/hw-fingertree-strict/actions/workflows/haskell.yml/badge.svg)](https://github.com/haskell-works/hw-fingertree-strict/actions/workflows/haskell.yml)

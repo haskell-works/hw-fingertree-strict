@@ -4,12 +4,7 @@
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances   #-}
-#if __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe                   #-}
-#endif
-#if __GLASGOW_HASKELL__ >= 710
-{-# LANGUAGE AutoDeriveTypeable     #-}
-#endif
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.FingerTree
@@ -106,9 +101,6 @@ instance Measured v a => S.Semigroup (FingerTree v a) where
 instance Measured v a => Monoid (FingerTree v a) where
   mempty = empty
   {-# INLINE mempty #-}
-  mappend = (><)
-  {-# INLINE mappend #-}
-
 
 -- Explicit Digit type (Exercise 1)
 
